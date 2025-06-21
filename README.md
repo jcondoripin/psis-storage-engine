@@ -1,3 +1,4 @@
+```
 mydb_rt/                        
 ├── include/                    # Headers públicos
 │   └── mydb_rt/                
@@ -27,3 +28,4 @@ mydb_rt/
 │   └── simple_client.cpp       # Demo de inserción + suscripción
 ├── CMakeLists.txt              
 └── README.md                   
+```
