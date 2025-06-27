@@ -1,6 +1,7 @@
 #pragma once
 
 #include "bplustree_node.hpp"
+#include "../../util/bplustree_exceptions.hpp"
 
 /**
  * @brief Leaf node for a B+ Tree.
@@ -14,30 +15,38 @@
 template <typename Key, typename Value>
 class BPlusTreeLeafNode : public BPlusTreeNode<Key, Value>
 {
-private:
+public:
   /// Values corresponding to keys
   std::vector<Value> values;
 
   /// Pointer to the next leaf node
   std::shared_ptr<BPlusTreeLeafNode<Key, Value>> next;
 
+public:
   /**
    * @brief Constructor for a leaf node.
    */
   BPlusTreeLeafNode() : next(nullptr) {}
 
-public:
   /**
    * @brief Insert a key (and value for leaf) into the node.
    * This method ensures that the key is inserted in sorted order
    * and that the value is associated with the key.
    * @param key Key to insert.
    * @param value Value to insert.
-   * @throws std::runtime_error if the key already exists in the leaf node.
+   * @throws KeyAlreadyExistsException if the key already exists in the leaf node.
+   * @throws EmptyArrayException if the leaf node is empty.
    * @note This method uses BPlusVector's searchPosition to find the correct
    */
   void insertValue(const Key &key, const Value &value)
   {
+    if (this->keys.size() == 0 && values.size() == 0)
+    {
+      this->keys.insertElement(key);
+      values.push_back(value);
+      return;
+    }
+
     int position = this->keys.searchElement(key);
     if (position < 0)
     {
@@ -48,14 +57,15 @@ public:
     }
     else
     {
-      throw std::runtime_error("Key already exists in leaf node");
+      throw KeyAlreadyExistsException(std::to_string(key));
     }
   };
 
   /**
    * @brief Remove a key (and value for leaf) from the node.
    * @param key Key to remove.
-   * @throws std::runtime_error if the key is not found in the leaf node.
+   * @throws KeyNotFoundException if the key is not found in the leaf node.
+   * @throws EmptyArrayException if the leaf node is empty.
    * @note This method uses BPlusVector's searchElement to find the key.
    */
   void removeValueByKey(const Key &key) override
@@ -63,12 +73,12 @@ public:
     int position = this->keys.searchElement(key);
     if (position >= 0)
     {
-      this->keys.removeElement(position);
+      this->keys.removeElementByPosition(position);
       values.erase(values.begin() + position);
     }
     else
     {
-      throw std::runtime_error("Key not found in leaf node");
+      throw KeyNotFoundException(std::to_string(key));
     }
   };
 
@@ -77,7 +87,8 @@ public:
    * Only relevant for leaf nodes.
    * @param key Key to search.
    * @return Value if found.
-   * @throws std::runtime_error if the key is not found in the leaf node.
+   * @throws KeyNotFoundException if the key is not found in the leaf node.
+   * @throws EmptyArrayException if the leaf node is empty.
    */
   Value getValueByKey(const Key &key) const override
   {
@@ -88,7 +99,7 @@ public:
     }
     else
     {
-      throw std::runtime_error("Key not found in leaf node");
+      throw KeyNotFoundException(std::to_string(key));
     }
   };
 };

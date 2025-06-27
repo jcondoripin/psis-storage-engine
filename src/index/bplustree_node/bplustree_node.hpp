@@ -15,14 +15,9 @@
 template <typename Key, typename Value>
 class BPlusTreeNode
 {
-protected:
+public:
   /// Sorted keys managed by BPlusVector
   BPlusVector<Key> keys;
-
-  /**
-   * @brief Virtual constructor.
-   */
-  virtual BPlusTreeNode() = default;
 
   /**
    * @brief Virtual destructor.

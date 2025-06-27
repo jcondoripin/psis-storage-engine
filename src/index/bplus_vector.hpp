@@ -3,6 +3,7 @@
 #include <vector>
 #include "../util/algorithm/binary_search.hpp"
 #include "../util/algorithm/lower_bound.hpp"
+#include "../util/general_exceptions.hpp"
 
 /**
  * @brief BPlusVector maintains a sorted vector with fast binary search and insertion.
@@ -20,7 +21,6 @@ private:
   std::vector<T> array;
 
 public:
-
   /**
    * @brief Inserts an element while maintaining ascending order.
    * Uses lower_bound to find the correct position.
@@ -36,6 +36,7 @@ public:
    * @brief Searches for an element using binary search.
    * @param value Element to search for.
    * @return The index if found, or -1 if not found.
+   * @throws EmptyArrayException if the array is empty.
    */
   int searchElement(const T &value) const
   {
@@ -59,12 +60,13 @@ public:
    * Throws std::out_of_range if the index is invalid.
    * @param position Index of the element.
    * @return The element at the given index.
+   * @throws OutOfRangeException if the position is out of range.
    */
-  T getElement(int position) const
+  T getElementByPosition(int position) const
   {
     if (position < 0 || position >= static_cast<int>(this->array.size()))
     {
-      throw std::out_of_range("Position out of range");
+      throw OutOfRangeException("Position out of range");
     }
     return this->array[position];
   }
@@ -73,12 +75,13 @@ public:
    * @brief Removes the element at a specific position.
    * Throws std::out_of_range if the index is invalid.
    * @param position Index of the element to remove.
+   * @throws OutOfRangeException if the position is out of range.
    */
   void removeElementByPosition(int position)
   {
     if (position < 0 || position >= static_cast<int>(this->array.size()))
     {
-      throw std::out_of_range("Position out of range");
+      throw OutOfRangeException("Position out of range");
     }
     this->array.erase(this->array.begin() + position);
   }
@@ -88,6 +91,7 @@ public:
    * Uses binary search to find the position and removes it if found.
    * @param value Element to remove.
    * @return true if the element was removed, false if not found.
+   * @throws EmptyArrayException if the array is empty.
    */
   bool removeElement(const T &value)
   {

@@ -1,7 +1,6 @@
 #pragma once
 
 #include <vector>
-#include <stdexcept>
 
 /**
  * Finds the position to insert a value in a sorted array using binary search.

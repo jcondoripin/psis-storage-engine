@@ -1,7 +1,7 @@
 #pragma once
 
 #include <vector>
-#include <stdexcept>
+#include "../general_exceptions.hpp"
 
 /**
  * Performs a binary search on a sorted array.
@@ -10,7 +10,7 @@
  * @param array The sorted array to search.
  * @param search The element to search for.
  * @return The index of the element if found, otherwise -1.
- * @throws std::invalid_argument if the array is empty.
+ * @throws EmptyArrayException if the array is empty.
  *
  * This function assumes that the array is sorted in ascending order.
  *
@@ -43,7 +43,7 @@ int binary_search(const std::vector<T> &array, const T &search)
 {
   if (array.empty())
   {
-    throw std::invalid_argument("Array cannot be empty");
+    throw EmptyArrayException("Array cannot be empty for binary search.");
   }
 
   int left = 0;

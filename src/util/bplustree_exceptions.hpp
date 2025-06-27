@@ -16,13 +16,13 @@ public:
 };
 
 /**
- * @brief Exception thrown when a key is not found in the B+ Tree leaf node.
+ * @brief Exception thrown when a key is not found in the B+ Tree node.
  */
 class KeyNotFoundException : public std::runtime_error
 {
 public:
   explicit KeyNotFoundException(const std::string &key)
-      : std::runtime_error("Key not found in leaf node: " + key) {}
+      : std::runtime_error("Key not found in node: " + key) {}
 };
 
 /**
