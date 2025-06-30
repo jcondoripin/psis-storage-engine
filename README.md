@@ -1,3 +1,12 @@
+ES
+
+Se propone lo siguiente:
+Tenemos un nodo de árbol b+,
+cada nodo contiene tres arrays, uno de claves, otro de valores y otro de nodos hijos
+las claves son almacenadas en un vector especial definido para búsquedas binarias y con método 
+lower_bound para inserción en posiciones específicas
+los otros dos arrays son vectores normales
+
 ```
 mydb_rt/                        
 ├── include/                    # Headers públicos
@@ -29,5 +38,3 @@ mydb_rt/
 ├── CMakeLists.txt              
 └── README.md                   
 ```
-
-UPDATED BY ME

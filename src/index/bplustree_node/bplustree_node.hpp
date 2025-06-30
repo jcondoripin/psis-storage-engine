@@ -3,6 +3,7 @@
 #include "../bplus_vector.hpp"
 #include <memory>
 #include <vector>
+#include <tuple>
 
 /**
  * @brief Abstract base class for a B+ Tree node.
@@ -47,4 +48,13 @@ public:
    * @return Value if found.
    */
   virtual Value getValueByKey(const Key &key) const = 0;
+
+  /**
+   * @brief Return a tuple with two nodes after split the root node.
+   * @param newNode The new node to fill with half of the keys and values.
+   * @param order The tree's order.
+   * @return
+   * @throws EmptyArrayException if the node is empty.
+   */
+  virtual std::tuple<std::shared_ptr<BPlusTreeNode<Key, Value>>, std::shared_ptr<BPlusTreeNode<Key, Value>>, Key> split()const = 0;
 };

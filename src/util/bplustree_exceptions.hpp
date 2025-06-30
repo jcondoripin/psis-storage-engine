@@ -43,6 +43,9 @@ class EmptyLeafNodeException : public std::runtime_error
 public:
   EmptyLeafNodeException()
       : std::runtime_error("Operation cannot be performed on an empty leaf node.") {}
+
+  EmptyLeafNodeException(const std::string &message)
+      : std::runtime_error(message) {}
 };
 
 /**
