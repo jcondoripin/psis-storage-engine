@@ -3,8 +3,9 @@
 #include "./bplustree_node/bplustree_node.hpp"
 #include "./bplustree_node/bplustree_leaf_node.hpp"
 #include "./bplustree_node/bplustree_internal_node.hpp"
-#include "../../util/bplustree_exceptions.hpp"
+#include "../util/bplustree_exceptions.hpp"
 #include <memory>
+#include <tuple>
 #include <optional>
 #include <utility>
 #include <iostream>
@@ -13,50 +14,12 @@ template <typename Key, typename Value>
 class BPlusTree
 {
 private:
-  std::shared_ptr<Node<Key, Value>> root;
+  std::shared_ptr<BPlusTreeNode<Key, Value>> root;
+  std::shared_ptr<BPlusTreeLeafNode<Key, Value>> rootLinked;
   int order;
 
 public:
-  explicit BPlusTree(int m = 4);
-
-  /**
-   * Search for a leaf node that contains the specified key
-   * @param key Key to search for
-   * @return std::shared_ptr<BPlusTreeLeafNode<Key, Value>> Pointer to the leaf node containing the key
-   * @throws KeyNotFoundException if the key is not found in the tree
-   */
-  std::shared_ptr<BPlusTreeLeafNode<Key, Value>> findLeafNode(const Key &key) const
-  {
-    // Implementación de búsqueda del nodo hoja
-    std::shared_ptr<BPlusTreeNode<Key, Value>> currentNode = root;
-    while (currentNode)
-    {
-      if (BPlusTreeLeafNode<Key, Value> *leafNode = std::dynamic_pointer_cast<BPlusTreeLeafNode<Key, Value>>(currentNode))
-      {
-        try
-        {
-          return leafNode->keys.getValueByKey(key) != Value()
-        }
-        catch (const KeyNotFoundException &e)
-        {
-          throw KeyNotFoundException("Clave no encontrada en el nodo hoja: " + std::to_string(key));
-        }
-      }
-      else
-      {
-        // es nodo interno
-        BPlusTreeInternalNode<Key, Value> *internalNode = static_cast<BPlusTreeInternalNode<Key, Value> *>(currentNode);
-        int position = internalNode->keys.searchPosition(key);
-        if (position < 0)
-        {
-          position = -position - 1; // Convertir a posición de inserción
-        }
-
-        return currentNode; // Retorna el nodo hoja encontrado
-      }
-    }
-    throw KeyNotFoundException("Key not found in B+ Tree");
-  }
+  BPlusTree<Key, Value>(int m = 4);
 
   /**
    * Insert a key-value pair into the B+ tree
@@ -70,87 +33,23 @@ public:
     if (!root)
     {
       root = std::make_shared<BPlusTreeLeafNode<Key, Value>>();
-      root->insertValue(key, value);
+      rootLinked = std::dynamic_pointer_cast<BPlusTreeLeafNode<Key, Value>>(root);
+      auto leaf = std::dynamic_pointer_cast<BPlusTreeLeafNode<Key, Value>>(root);
+      leaf->insertValue(key, value);
       return;
     }
 
     try
     {
       auto currentNode = this->root;
-      while (currentNode && !std::dynamic_pointer_cast<BPlusTreeLeafNode<Key, Value>>(currentNode))
+      auto tupleInsert = insertRecursive(key, value, currentNode);
+      if (tupleInsert.has_value())
       {
-        auto internalNode = std::dynamic_pointer_cast<BPlusTreeInternalNode<Key, Value>>(currentNode);
-        currentNode = internalNode->getChildForKey(key)
+        auto [firstNode, secondNode, promotedKey] = *tupleInsert;
+        auto newRootNode = std::make_shared<BPlusTreeInternalNode<Key, Value>>();
+        newRootNode->insertChild(firstNode, secondNode, promotedKey);
+        this->root = newRootNode;
       }
-      auto leafNode = std::dynamic_pointer_cast<BPlusTreeLeafNode<Key, Value>>(currentNode);
-      leafNode->insertValue(key, value);
-
-      // split method
-      if (leafNode->isFull(this->order))
-      {
-        auto newLeafNode = std::make_shared<BPlusTreeLeafNode<Key, Value>>();
-        leafNode->split(newLeafNode, this->order);
-        if (leafNode == this->root)
-        {
-          auto newRoot = std::make_shared<BPlusTreeInternalNode<Key, Value>>();
-          newRoot->insertChild(leafNode->keys.getElementByPosition(0), leafNode);
-          newRoot->insertChild(newLeafNode->keys.getElementByPosition(0), newLeafNode);
-          this->root = newRoot;
-        }
-        else
-        {
-          auto parent = std::dynamic_pointer_cast<BPlusTreeInternalNode<Key, Value>>(leafNode->parent);
-          parent->insertChild(newLeafNode->keys.getElementByPosition(0), newLeafNode);
-        }
-      }
-    }
-    catch (const KeyAlreadyExistsException &)
-    {
-      throw KeyAlreadyExistsException("Key already exists in B+ Tree: " + std::to_string(key));
-    }
-  }
-
-  /**
-   * Insert recursive with split operator
-   * @param key The key to insert
-   * @param value The value associated with the key
-   * @return void
-   * @throws KeyAlreadyExistsException if the key already exists in the tree
-   */
-  std::optional<std::pair<Key, Value>> insertRecursive(const Key &key, const Value &value, const BPlusTreeNode<Key, Value> &node)
-  {
-    if (std::dynamic_pointer_cast<BPlusTreeLeafNode<Key, Value>>(node))
-    {
-      auto leafNode = std::dynamic_pointer_cast<BPlusTreeLeafNode<Key, Value>>(node);
-      leafNode->insertValue(key, value);
-      if (leafNode->isFull(this->order))
-      {
-        auto newLeafNode = std::make_shared<BPlusTreeLeafNode<Key, Value>>();
-        // divide entre 2 y sube la clabe del nood derecho (el menor del mas derecho) method split manual, no se crea
-        newLeafNode
-
-      } else {
-        return nullptr;
-      }
-    }
-    else
-    {
-      auto internalNode = std::dynamic_pointer_cast<BPlusTreeInternalNode<Key, Value>>(node);
-      auto child = internalNode->getChildForKey(key);
-      insertRecursive(key, value, *child);
-    }
-  }
-  {
-    if (!root)
-    {
-      root = std::make_shared<BPlusTreeLeafNode<Key, Value>>();
-      root->insertValue(key, value);
-      return;
-    }
-
-    try
-    {
-      insertRecursive(key, value, *root);
     }
     catch (const KeyAlreadyExistsException &)
     {
@@ -172,9 +71,9 @@ public:
       while (currentNode && !std::dynamic_pointer_cast<BPlusTreeLeafNode<Key, Value>>(currentNode))
       {
         auto internalNode = std::dynamic_pointer_cast<BPlusTreeInternalNode<Key, Value>>(currentNode);
-        currentNode = internalNode->getChildForKey(key)
+        currentNode = internalNode->getChildForKey(key);
       }
-      return leafNode->getValueByKey(key);
+      return currentNode->getValueByKey(key);
     }
     catch (const KeyNotFoundException &)
     {
@@ -193,5 +92,111 @@ public:
    * Imprime el contenido del árbol B+ en orden
    * @return void
    */
-  void print() const;
+  void print() const
+  {
+    if (!root)
+    {
+      std::cout << "El árbol B+ está vacío." << std::endl;
+      return;
+    }
+    std::cout << "Contenido del árbol B+ en orden:" << std::endl;
+    printRecursive(root);
+  }
+
+private:
+  /**
+   * Insert recursive with split operator
+   * @param key The key to insert
+   * @param value The value associated with the key
+   * @return std::optional<std::pair<Key, Value>> Promoted key if split occurs, otherwise std::nullopt
+   * @throws KeyAlreadyExistsException if the key already exists in the tree
+   */
+  std::optional<std::tuple<std::shared_ptr<BPlusTreeNode<Key, Value>>, std::shared_ptr<BPlusTreeNode<Key, Value>>, Key>> insertRecursive(const Key &key, const Value &value, std::shared_ptr<BPlusTreeNode<Key, Value>> node)
+  {
+    if (auto leafNode = std::dynamic_pointer_cast<BPlusTreeLeafNode<Key, Value>>(node))
+    {
+      leafNode->insertValue(key, value);
+      if (leafNode->isFull(this->order))
+      {
+        return leafNode->split();
+      }
+      else
+      {
+        return std::nullopt;
+      }
+    }
+    else
+    {
+      auto internalNode = std::dynamic_pointer_cast<BPlusTreeInternalNode<Key, Value>>(node);
+      auto child = internalNode->getChildForKey(key);
+      auto tupleInsert = insertRecursive(key, value, child);
+
+      if (tupleInsert.has_value())
+      {
+        auto [firstNode, secondNode, promotedKey] = *tupleInsert;
+        internalNode->insertChild(firstNode, secondNode, promotedKey);
+        if (internalNode->isFull(this->order))
+        {
+          return internalNode->split();
+        }
+        else
+        {
+          return std::nullopt;
+        }
+      }
+      return std::nullopt;
+    }
+  }
+
+  /**
+   * Prints the B+ tree recursively
+   * @param node The current node to print
+   * @return void
+   * @throws EmptyArrayException if the node is empty
+   */
+  void printRecursive(const std::shared_ptr<BPlusTreeNode<Key, Value>> &node) const
+  {
+    if (!node)
+    {
+      throw EmptyArrayException("El nodo está vacío, no se puede imprimir.");
+    }
+    if (auto leafNode = std::dynamic_pointer_cast<BPlusTreeLeafNode<Key, Value>>(node))
+    {
+      for (const auto &key : leafNode->keys.getArray())
+      {
+        std::cout << key << " ";
+      }
+      std::cout << " = ";
+      for (const auto &value : leafNode->values)
+      {
+        std::cout << value << " ";
+      }
+      std::cout << "| ";
+    }
+    else
+    {
+      auto internalNode = std::dynamic_pointer_cast<BPlusTreeInternalNode<Key, Value>>(node);
+      for (const auto &key : internalNode->keys.getArray())
+      {
+        std::cout << key << " ";
+      }
+      std::cout << std::endl;
+      for (const auto &child : internalNode->children)
+      {
+        printRecursive(child);
+      }
+    }
+  }
 };
+
+template <typename Key, typename Value>
+inline BPlusTree<Key, Value>::BPlusTree(int m)
+{
+  if (m < 2)
+  {
+    throw std::invalid_argument("El orden del árbol B+ debe ser al menos 2.");
+  }
+  this->order = m;
+  this->root = nullptr;
+  this->rootLinked = nullptr;
+}

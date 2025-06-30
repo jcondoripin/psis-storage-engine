@@ -16,7 +16,7 @@
  * @tparam Value Type of values associated with the keys.
  */
 template <typename Key, typename Value>
-class BPlusTreeLeafNode : public BPlusTreeNode<Key, Value>
+class BPlusTreeLeafNode : public BPlusTreeNode<Key, Value>, public std::enable_shared_from_this<BPlusTreeLeafNode<Key, Value>>
 {
 public:
   /// Values corresponding to keys
@@ -115,7 +115,7 @@ public:
    * @return A tuple containing the new leaf node and the key that will be promoted to the parent.
    * @throws EmptyLeafNodeException if the leaf node is empty.
    */
-  std::tuple<std::shared_ptr<BPlusTreeNode<Key, Value>>, std::shared_ptr<BPlusTreeNode<Key, Value>>, Key> split() const override
+  std::tuple<std::shared_ptr<BPlusTreeNode<Key, Value>>, std::shared_ptr<BPlusTreeNode<Key, Value>>, Key> split() override
   {
     if (this->keys.size() == 0)
     {
@@ -123,25 +123,26 @@ public:
     }
 
     int posMed = this->keys.size() / 2;
-    
+
     auto keysNode = this->keys.getArray();
 
     Key promotedKey = keysNode[posMed];
-    auto firstNode = std::make_shared<BPlusTreeLeafNode<Key, Value>>();
+    auto firstNode = this;
     auto secondNode = std::make_shared<BPlusTreeLeafNode<Key, Value>>();
 
-    for (int i = 0; i < keysNode.size(); ++i)
+    secondNode->next = this->next;
+    this->next = secondNode;
+
+    for (int i = posMed; i < keysNode.size(); i++)
     {
-      if (i < posMed)
-      {
-        firstNode->insertValue(keysNode[i], values[i]);
-      }
-      else
-      {
-        secondNode->insertValue(keysNode[i], values[i]);
-      }
+      secondNode->insertValue(keysNode[i], values[i]);
     }
 
-    return std::make_tuple(firstNode, secondNode, promotedKey);
+    for (int i = keysNode.size() - 1; i >= posMed; i--)
+    {
+      this->removeValueByKey(keysNode[i]);
+    }
+
+    return {this->shared_from_this(), secondNode, promotedKey};
   }
 };

@@ -32,7 +32,7 @@ public:
    */
   bool isFull(int order) const
   {
-    return keys.size() >= order - 1;
+    return keys.size() > order - 1;
   }
 
   /**
@@ -50,11 +50,28 @@ public:
   virtual Value getValueByKey(const Key &key) const = 0;
 
   /**
+   * @brief Print the contents of the node.
+   * This method is for debugging purposes and prints the keys in the node.
+   */
+  virtual void print() const
+  {
+    if (keys.size() == 0)
+    {
+      throw EmptyArrayException("Node is empty, cannot print.");
+    }
+    for (const auto &key : keys.getArray())
+    {
+      std::cout << key << " ";
+    }
+    std::cout << std::endl;
+  }
+
+  /**
    * @brief Return a tuple with two nodes after split the root node.
    * @param newNode The new node to fill with half of the keys and values.
    * @param order The tree's order.
    * @return
    * @throws EmptyArrayException if the node is empty.
    */
-  virtual std::tuple<std::shared_ptr<BPlusTreeNode<Key, Value>>, std::shared_ptr<BPlusTreeNode<Key, Value>>, Key> split()const = 0;
+  virtual std::tuple<std::shared_ptr<BPlusTreeNode<Key, Value>>, std::shared_ptr<BPlusTreeNode<Key, Value>>, Key> split() = 0;
 };
