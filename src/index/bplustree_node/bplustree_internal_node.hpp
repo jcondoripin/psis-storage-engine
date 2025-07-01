@@ -15,21 +15,50 @@ public:
   std::vector<std::shared_ptr<BPlusTreeNode<Key, Value>>> children;
 
   /**
-   * @brief Remove a key for an internal node.
+   * @brief Remove the separator key and the appropriate child pointer.
+   *
+   * In a B+ Tree internal node, each key separates two children:
+   * [ child0 | key0 | child1 | key1 | child2 | ... ]
+   *
+   * When merging two sibling nodes, the separator key must be removed.
+   * Conventionally, the left sibling absorbs the right sibling,
+   * so the right child pointer is erased.
+   *
+   * @param key The separator key to remove.
+   * @param removeLeftChild If true, remove the left child pointer;
+   * otherwise, remove the right child pointer (default for merge).
+   * Usually false for merge.
+   *
+   * @throws KeyNotFoundException if the key does not exist.
    */
-  void removeValueByKey(const Key &) override
+  void removeChildByKey(const Key &key, bool removeLeftChild = false)
   {
-    throw std::runtime_error("Cannot remove value by key in internal node.");
+    int position = this->keys.searchElement(key);
+    if (position >= 0)
+    {
+      this->keys.removeElementByPosition(position);
+      if (removeLeftChild)
+      {
+        children.erase(children.begin() + position);
+      }
+      else
+      {
+        children.erase(children.begin() + position + 1);
+      }
+    }
+    else
+    {
+      throw KeyNotFoundException("Key not found in internal node: " + std::to_string(key));
+    }
   }
 
   /**
    * @brief Get the value associated with a key.
    */
-  Value getValueByKey(const Key&) const override
+  Value getValueByKey(const Key &) const override
   {
     throw std::runtime_error("Cannot get value by key in internal node.");
   }
-
 
   /**
    * @brief Insert a key and child pointer into the internal node.
@@ -80,6 +109,48 @@ public:
     {
       return children[this->keys.searchPosition(key)];
     }
+  }
+
+  /**
+   * @brief Find the left and right siblings for a given child node.
+   *
+   * Given a pointer to a child, this method returns its immediate left and right siblings
+   * (if they exist) in the children vector.
+   *
+   * @param child The child node for which to find siblings.
+   * @return A std::pair of optional siblings: (leftSibling, rightSibling)
+   */
+  std::pair<std::shared_ptr<BPlusTreeNode<Key, Value>>, std::shared_ptr<BPlusTreeNode<Key, Value>>> getSiblingsFor(const std::shared_ptr<BPlusTreeNode<Key, Value>> &child) const
+  {
+    int index = -1;
+    for (int i = 0; i < children.size(); ++i)
+    {
+      if (children[i] == child)
+      {
+        index = i;
+        break;
+      }
+    }
+
+    if (index == -1)
+    {
+      throw ChildNotFoundException();
+    }
+
+    std::shared_ptr<BPlusTreeNode<Key, Value>> leftSibling = nullptr;
+    std::shared_ptr<BPlusTreeNode<Key, Value>> rightSibling = nullptr;
+
+    if (index > 0)
+    {
+      leftSibling = children[index - 1];
+    }
+
+    if (index < static_cast<int>(children.size()) - 1)
+    {
+      rightSibling = children[index + 1];
+    }
+
+    return std::make_pair(leftSibling, rightSibling);
   }
 
   /**

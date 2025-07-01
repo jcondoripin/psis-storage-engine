@@ -26,20 +26,34 @@ public:
   virtual ~BPlusTreeNode() = default;
 
   /**
-   * @brief Returns true if the node is full (keys >= order - 1).
+   * @brief Returns true if the node is full (keys > order - 1).
    * @param order The tree's order.
    * @return True if full.
    */
-  bool isFull(int order) const
+  bool isOverflow(int order) const
   {
     return keys.size() > order - 1;
   }
 
   /**
-   * @brief Remove a key (and value for leaf) from the node.
-   * @param key Key to remove.
+   * @brief Returns true if the node is full (keys >= order - 1).
+   * @param order The tree's order.
+   * @return True if underflow.
    */
-  virtual void removeValueByKey(const Key &key) = 0;
+  bool isUnderflow(int order) const
+  {
+    return keys.size() < (order - 1) / 2;
+  }
+
+  /**
+   * @brief Returns true if the node can borrow.
+   * @param order The tree's order.
+   * @return True if can.
+   */
+  bool canBorrow(int order) const
+  {
+    return (keys.size() - 1) >= (order - 1) / 2;
+  }
 
   /**
    * @brief Get the value associated with a key.
@@ -53,13 +67,9 @@ public:
    * @brief Print the contents of the node.
    * This method is for debugging purposes and prints the keys in the node.
    */
-  virtual void print() const
+  virtual void print()
   {
-    if (keys.size() == 0)
-    {
-      throw EmptyArrayException("Node is empty, cannot print.");
-    }
-    for (const auto &key : keys.getArray())
+    for (auto &key : keys.getArray())
     {
       std::cout << key << " ";
     }

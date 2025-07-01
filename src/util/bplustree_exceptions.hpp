@@ -26,13 +26,13 @@ public:
 };
 
 /**
- * @brief Exception thrown when the B+ Tree leaf node is full and cannot accommodate more keys.
+ * @brief Exception thrown when a child is not found in a Internal node.
  */
-class LeafNodeFullException : public std::runtime_error
+class ChildNotFoundException : public std::runtime_error
 {
 public:
-  explicit LeafNodeFullException(int order)
-      : std::runtime_error("Leaf node is full, cannot insert more keys. Order: " + std::to_string(order)) {}
+  explicit ChildNotFoundException()
+      : std::runtime_error("Child not found in node ") {}
 };
 
 /**
@@ -48,22 +48,3 @@ public:
       : std::runtime_error(message) {}
 };
 
-/**
- * @brief Exception thrown when a split operation fails in the B+ Tree leaf node.
- */
-class LeafNodeSplitException : public std::runtime_error
-{
-public:
-  explicit LeafNodeSplitException(const std::string &message)
-      : std::runtime_error("Leaf node split failed: " + message) {}
-};
-
-/**
- * @brief Exception thrown when an invalid operation is attempted on the B+ Tree leaf node.
- */
-class InvalidLeafNodeOperationException : public std::runtime_error
-{
-public:
-  explicit InvalidLeafNodeOperationException(const std::string &message)
-      : std::runtime_error("Invalid operation on leaf node: " + message) {}
-};

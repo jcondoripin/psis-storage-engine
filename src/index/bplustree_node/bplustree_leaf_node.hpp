@@ -71,7 +71,7 @@ public:
    * @throws EmptyArrayException if the leaf node is empty.
    * @note This method uses BPlusVector's searchElement to find the key.
    */
-  void removeValueByKey(const Key &key) override
+  void removeValueByKey(const Key &key)
   {
     int position = this->keys.searchElement(key);
     if (position >= 0)

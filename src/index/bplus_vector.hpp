@@ -114,10 +114,19 @@ public:
   }
 
   /**
+   * @brief Returns if the array is empty
+   * @return boolean.
+   */
+  int empty() const
+  {
+    return this->array.empty();
+  }
+
+  /**
    * @brief Returns a const reference to the internal vector.
    * @return Const reference to the sorted vector.
    */
-  const std::vector<T> &getArray() const
+  std::vector<T> &getArray()
   {
     return this->array;
   }
