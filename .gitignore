@@ -1,2 +1,4 @@
 .DS_Store
-echo .DS_Store >> .gitignore
+.vscode
+build
+*.exe
