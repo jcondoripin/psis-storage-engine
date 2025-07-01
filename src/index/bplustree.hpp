@@ -42,11 +42,6 @@ public:
     try
     {
       auto currentNode = this->root;
-      if (key == 8)
-      {
-        std::cout << currentNode << std::endl;
-        currentNode->print();
-      }
       auto tupleInsert = insertRecursive(key, value, currentNode);
       if (tupleInsert.has_value())
       {
@@ -96,7 +91,6 @@ public:
     if (!root)
       return false;
     auto hasRemoved = removeRecursive(root, key);
-    this->print();
     return !hasRemoved;
   };
 
@@ -188,11 +182,6 @@ private:
           } while (toLeaf(current) == nullptr);
 
           internal->keys.getArray()[position] = current->keys.getArray()[0];
-          if (key == 8)
-          {
-            this->print();
-            std::cout << "five position awwd" << position << " " << internal->keys.getArray()[position] << std::endl;
-          }
         }
       }
 
@@ -222,10 +211,6 @@ private:
             Key internKey = child->keys.getArray().front();
             int position = internal->keys.searchPosition(internKey);
             internal->keys.getArray()[position] = internKey;
-            if (key == 5)
-            {
-              std::cout << position << " " << internal->keys.getArray()[position] << std::endl;
-            }
           }
           else
           {
@@ -387,12 +372,7 @@ private:
     else
     {
       auto internalNode = std::dynamic_pointer_cast<BPlusTreeInternalNode<Key, Value>>(node);
-      if (key == 8)
-      {
-        internalNode->print();
-      }
       auto child = internalNode->getChildForKey(key);
-      child->print();
       auto tupleInsert = insertRecursive(key, value, child);
       if (tupleInsert.has_value())
       {
