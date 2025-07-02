@@ -86,6 +86,25 @@ public:
   };
 
   /**
+   * @brief Updates the value associated with a key in the leaf node.
+   * @param key Key whose value you want to update.
+   * @param newValue New value to assign.
+   * @throws KeyNotFoundException if the key is not found in the leaf node.
+   */
+  void updateValueByKey(const Key &key, const Value &newValue)
+  {
+    int position = this->keys.searchElement(key);
+    if (position >= 0)
+    {
+      values[position] = newValue;
+    }
+    else
+    {
+      throw KeyNotFoundException(std::to_string(key));
+    }
+  }
+
+  /**
    * @brief Get the value associated with a key.
    * Only relevant for leaf nodes.
    * @param key Key to search.

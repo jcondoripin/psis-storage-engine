@@ -52,7 +52,7 @@ int main()
     std::cout << "Árbol tras eliminar 14, 16, 13, 0: ";
     tree.print();
 
-    for (auto i : {8,1,0,22,70,69,71,49})
+    for (auto i : {8, 1, 0, 22, 70, 69, 71, 49})
     {
       tree.insert(i, "Valor" + std::to_string(i));
     }
@@ -63,7 +63,17 @@ int main()
     assert(tree.remove(81));
     assert(tree.remove(82));
 
-    std::cout << "Árbol insertar 8 nuevamente";
+    std::cout << "Probando actualización de clave 10...\n";
+    bool updated = tree.update(10, "NuevoValor10");
+    assert(updated);
+    auto updatedVal = tree.search(10);
+    assert(updatedVal.has_value());
+    assert(updatedVal.value() == "NuevoValor10");
+
+    std::cout << "Probando actualización de clave inexistente (999)...\n";
+    bool updatedInexistente = tree.update(999, "NoExiste");
+    assert(!updatedInexistente);
+
     tree.print();
 
     tree.printLinked();
