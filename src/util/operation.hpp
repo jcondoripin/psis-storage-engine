@@ -25,6 +25,7 @@ enum class Operation
   UPDATE,
   REMOVE,
   SEARCH,
+  BACKUP,
 };
 
 inline std::string operationToString(Operation op)
@@ -41,6 +42,8 @@ inline std::string operationToString(Operation op)
     return "REMOVE";
   case Operation::SEARCH:
     return "SEARCH";
+  case Operation::BACKUP:
+    return "BACKUP";
   default:
     return "UNKNOWN";
   }
@@ -58,5 +61,7 @@ Operation stringToOperation(const std::string &str)
     return Operation::REMOVE;
   if (str == "SEARCH")
     return Operation::SEARCH;
+  if (str == "BACKUP")
+    return Operation::BACKUP;
   throw std::invalid_argument("Unknown Operation string: " + str);
 }
