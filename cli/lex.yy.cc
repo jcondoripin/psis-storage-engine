@@ -353,8 +353,8 @@ static void yynoreturn yy_fatal_error ( const char* msg  );
 	(yy_hold_char) = *yy_cp; \
 	*yy_cp = '\0'; \
 	(yy_c_buf_p) = yy_cp;
-#define YY_NUM_RULES 6
-#define YY_END_OF_BUFFER 7
+#define YY_NUM_RULES 7
+#define YY_END_OF_BUFFER 8
 /* This struct is not used in this scanner,
    but its presence is necessary. */
 struct yy_trans_info
@@ -362,15 +362,12 @@ struct yy_trans_info
 	flex_int32_t yy_verify;
 	flex_int32_t yy_nxt;
 	};
-static const flex_int16_t yy_accept[64] =
+static const flex_int16_t yy_accept[41] =
     {   0,
-        0,    0,    7,    5,    5,    5,    5,    5,    0,    0,
+        0,    0,    8,    6,    6,    6,    6,    6,    6,    0,
         0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
-        0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
-        0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
-        0,    0,    0,    0,    0,    0,    0,    0,    2,    0,
-        0,    0,    0,    0,    0,    1,    0,    4,    0,    0,
-        0,    3,    0
+        0,    0,    0,    0,    0,    0,    0,    0,    0,    1,
+        4,    2,    3,    5,    1,    4,    2,    3,    5,    0
     } ;
 
 static const YY_CHAR yy_ec[256] =
@@ -378,16 +375,16 @@ static const YY_CHAR yy_ec[256] =
         1,    1,    1,    1,    1,    1,    1,    1,    1,    2,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
-        1,    3,    1,    4,    1,    1,    1,    1,    1,    1,
-        1,    1,    1,    1,    1,    1,    1,    5,    5,    5,
-        5,    5,    5,    5,    5,    5,    5,    1,    1,    1,
-        1,    1,    1,    1,    6,    1,    7,    8,    9,    1,
-        1,    1,   10,    1,    1,   11,    1,   12,    1,    1,
-        1,   13,   14,   15,    1,    1,    1,    1,    1,    1,
+        1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
+        1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
+        1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
+        1,    1,    1,    1,    3,    1,    4,    5,    6,    1,
+        1,    1,    7,    1,    1,    8,    1,    9,    1,   10,
+        1,   11,   12,   13,   14,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
 
-       16,    1,    1,    1,    1,    1,    1,    1,    1,    1,
-        1,    1,    1,   17,   18,    1,   19,    1,    1,    1,
+        1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
+        1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
@@ -405,62 +402,48 @@ static const YY_CHAR yy_ec[256] =
         1,    1,    1,    1,    1
     } ;
 
-static const YY_CHAR yy_meta[20] =
+static const YY_CHAR yy_meta[15] =
     {   0,
-        1,    1,    1,    2,    1,    1,    1,    1,    1,    1,
-        1,    1,    1,    1,    1,    1,    1,    1,    1
+        1,    2,    1,    1,    1,    1,    1,    1,    1,    1,
+        1,    1,    1,    1
     } ;
 
-static const flex_int16_t yy_base[66] =
+static const flex_int16_t yy_base[46] =
     {   0,
-        0,    8,   77,   78,   63,   66,   62,   64,   63,   60,
-       56,   58,   62,   58,   57,   56,   49,   48,   49,   54,
-       51,   50,   43,   42,   53,   52,   51,   50,    0,    1,
-        2,    6,   34,   33,   32,   31,   32,   31,   30,   29,
-       27,   26,   25,   24,   22,   21,   20,   19,   78,   33,
-       32,   20,    8,   21,   24,   12,   25,    7,   28,    0,
-        2,   78,   78,   32,    0
+        0,    0,   45,   46,   33,   37,   33,   35,   30,   33,
+       30,   25,   28,   30,   31,   27,   26,   25,   27,   16,
+       15,   16,   22,   12,   18,   17,    9,    8,   14,    0,
+        0,    0,    0,    0,    0,    0,    0,    0,    0,   46,
+       18,   17,   16,   15,   14
     } ;
 
-static const flex_int16_t yy_def[66] =
+static const flex_int16_t yy_def[46] =
     {   0,
-       64,   64,   63,   63,   63,   63,   63,   63,   63,   63,
-       63,   63,   63,   63,   63,   63,   63,   63,   63,   63,
-       63,   63,   63,   63,   63,   63,   63,   63,   63,   63,
-       63,   63,   63,   63,   63,   63,   63,   63,   63,   63,
-       63,   63,   63,   63,   63,   63,   63,   63,   63,   63,
-       63,   63,   63,   63,   63,   63,   63,   63,   63,   65,
-       65,   63,    0,   63,   63
+       40,    1,   40,   40,   40,   40,   40,   40,   40,   40,
+       40,   40,   40,   40,   40,   40,   40,   40,   40,   40,
+       40,   40,   40,   40,   40,   40,   40,   40,   40,   41,
+       42,   43,   44,   45,   41,   42,   43,   44,   45,    0,
+       40,   40,   40,   40,   40
     } ;
 
-static const flex_int16_t yy_nxt[98] =
+static const flex_int16_t yy_nxt[61] =
     {   0,
-       61,   63,   29,   30,   31,   62,    5,    6,   32,    7,
-       53,   58,   56,    8,    5,    6,   56,    7,   33,   34,
-       35,    8,   55,   54,   36,   57,   55,   59,   58,   57,
-       59,   60,    4,    4,   54,   53,   52,   51,   50,   49,
-       48,   47,   46,   45,   44,   43,   42,   41,   40,   39,
-       38,   37,   32,   31,   30,   29,   28,   27,   26,   25,
-       24,   23,   22,   21,   20,   19,   18,   17,   16,   15,
-       14,   13,   12,   11,   10,    9,   63,    3,   63,   63,
-       63,   63,   63,   63,   63,   63,   63,   63,   63,   63,
-       63,   63,   63,   63,   63,   63,   63
-
+        4,    4,    4,    5,    6,    4,    7,    4,    4,    4,
+        4,    8,    4,    9,   39,   38,   37,   36,   35,   34,
+       33,   32,   31,   30,   29,   28,   27,   26,   25,   24,
+       23,   22,   21,   20,   19,   18,   17,   16,   15,   14,
+       13,   12,   11,   10,   40,    3,   40,   40,   40,   40,
+       40,   40,   40,   40,   40,   40,   40,   40,   40,   40
     } ;
 
-static const flex_int16_t yy_chk[98] =
+static const flex_int16_t yy_chk[61] =
     {   0,
-       65,    0,   29,   30,   31,   61,    1,    1,   32,    1,
-       53,   58,   53,    1,    2,    2,   56,    2,   29,   30,
-       31,    2,   52,   54,   32,   54,   55,   57,   55,   57,
-       59,   59,   64,   64,   51,   50,   48,   47,   46,   45,
-       44,   43,   42,   41,   40,   39,   38,   37,   36,   35,
-       34,   33,   28,   27,   26,   25,   24,   23,   22,   21,
-       20,   19,   18,   17,   16,   15,   14,   13,   12,   11,
-       10,    9,    8,    7,    6,    5,    3,   63,   63,   63,
-       63,   63,   63,   63,   63,   63,   63,   63,   63,   63,
-       63,   63,   63,   63,   63,   63,   63
-
+        1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
+        1,    1,    1,    1,   45,   44,   43,   42,   41,   29,
+       28,   27,   26,   25,   24,   23,   22,   21,   20,   19,
+       18,   17,   16,   15,   14,   13,   12,   11,   10,    9,
+        8,    7,    6,    5,    3,   40,   40,   40,   40,   40,
+       40,   40,   40,   40,   40,   40,   40,   40,   40,   40
     } ;
 
 static yy_state_type yy_last_accepting_state;
@@ -480,13 +463,28 @@ char *yytext;
 #line 1 "cli.l"
 #line 2 "cli.l"
 #include <iostream>
+#include <vector>
 #include <string>
+#include <sstream>
 #include <regex>
+#include <iomanip>
 #include "../src/storage/database_node.hpp"
+#include "../src/storage/database_node_flb.hpp"
+
 DatabaseNode db("cli_data/");
 using namespace std;
-#line 488 "lex.yy.cc"
-#line 489 "lex.yy.cc"
+
+KindColumn kindFromString(const std::string& s) {
+  if (s == "INT") return KindColumn::INT;
+  if (s == "TEXT") return KindColumn::TEXT;
+  if (s == "DOUBLE") return KindColumn::DOUBLE;
+  if (s == "LONG") return KindColumn::LONG;
+  if (s == "BOOL") return KindColumn::BOOL;
+  if (s == "DATE") return KindColumn::DATE;
+  throw std::invalid_argument("Tipo inválido: " + s);
+}
+#line 486 "lex.yy.cc"
+#line 487 "lex.yy.cc"
 
 #define INITIAL 0
 
@@ -703,9 +701,10 @@ YY_DECL
 		}
 
 	{
-#line 10 "cli.l"
+#line 25 "cli.l"
 
-#line 708 "lex.yy.cc"
+
+#line 707 "lex.yy.cc"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -732,13 +731,13 @@ yy_match:
 			while ( yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state )
 				{
 				yy_current_state = (int) yy_def[yy_current_state];
-				if ( yy_current_state >= 64 )
+				if ( yy_current_state >= 41 )
 					yy_c = yy_meta[yy_c];
 				}
 			yy_current_state = yy_nxt[yy_base[yy_current_state] + yy_c];
 			++yy_cp;
 			}
-		while ( yy_base[yy_current_state] != 78 );
+		while ( yy_base[yy_current_state] != 46 );
 
 yy_find_action:
 		yy_act = yy_accept[yy_current_state];
@@ -764,73 +763,189 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 11 "cli.l"
+#line 27 "cli.l"
 {
-  int id;
-  sscanf(yytext, "DELETE users %d", &id);
-  bool ok = db.remove("users", id);
-  if (ok)
-    cout << "🗑️ Registro con ID " << id << " eliminado.\n";
-  else
-    cout << "❌ No se encontró el ID " << id << " para eliminar.\n";
+  string line(yytext);
+  smatch match;
+  regex pattern(R"(CREATE\s+(\w+)\s+(.*))");
+
+  if (regex_match(line, match, pattern)) {
+    string tableName = match[1];
+    string schemaStr = match[2];
+    Table t;
+    stringstream ss(schemaStr);
+    string token;
+
+    while (ss >> token) {
+      auto pos = token.find(':');
+      if (pos == string::npos) {
+        cout << "❌ Error en columna: " << token << endl;
+        return 0;
+      }
+      string col = token.substr(0, pos);
+      string kind = token.substr(pos + 1);
+      t.addColumn({col, kindFromString(kind)});
+    }
+
+    db.createTable(tableName, t, 0);
+    cout << "✅ Tabla '" << tableName << "' creada.\n";
+  } else {
+    cout << "❌ Error de sintaxis CREATE.\n";
+  }
 }
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 20 "cli.l"
+#line 57 "cli.l"
 {
-  Table t;
-  t.addColumn({"id", KindColumn::INT});
-  t.addColumn({"name", KindColumn::TEXT});
-  db.createTable("users", t, 0);
-  cout << "✅ Tabla 'users' creada.\n";
+  string line(yytext);
+  smatch match;
+  regex pattern(R"(INSERT\s+(\w+)\s+(.+))");
+
+  if (regex_match(line, match, pattern)) {
+    string tableName = match[1];
+    string valuesStr = match[2];
+
+    Table schema = flb::loadSchemaFromFile("cli_data/", tableName);
+    auto cols = schema.getColumnNames();
+    stringstream ss(valuesStr);
+    string val;
+    vector<string> tokens;
+
+    while (ss >> quoted(val)) tokens.push_back(val);
+
+    if (tokens.size() != cols.size()) {
+      cout << "❌ Número de valores incorrecto.\n";
+      return 0;
+    }
+
+    Record r;
+    for (size_t i = 0; i < cols.size(); ++i) {
+      KindColumn k = schema.getColumnKind(cols[i]);
+      r.push_back({cols[i], tokens[i], kindColumnToString(k)});
+    }
+
+    db.insert(tableName, r);
+    cout << "✅ Insertado en '" << tableName << "'.\n";
+  } else {
+    cout << "❌ Error de sintaxis INSERT.\n";
+  }
 }
 	YY_BREAK
 case 3:
-/* rule 3 can match eol */
 YY_RULE_SETUP
-#line 27 "cli.l"
+#line 92 "cli.l"
 {
-  std::string input(yytext);
-  std::smatch match;
-  std::regex pattern("INSERT\\s+users\\s+(\\d+)\\s+\"([^\"]+)\""); // ✅ corregido
-  if (std::regex_match(input, match, pattern)) {
-    int id = std::stoi(match[1]);
-    std::string value = match[2];
-    Record r = {{"id", std::to_string(id), "INT"}, {"name", value, "TEXT"}};
-    db.insert("users", r);
-    cout << "✅ Insertado: ID=" << id << " NAME=" << value << endl;
+  string line(yytext);
+  smatch match;
+  regex pattern(R"(SELECT\s+(\w+)\s+(\d+))");
+
+  if (regex_match(line, match, pattern)) {
+    string name = match[1];
+    int id = stoi(match[2]);
+    cout << "🔍 SELECT en '" << name << "' con id=" << id << endl;
+    auto res = db.search(name, id);
+    if (res) {
+      for (auto &v : *res)
+        cout << v.column << "=" << v.value << " ";
+      cout << endl;
+    } else {
+      cout << "❌ No encontrado\n";
+    }
   } else {
-    cout << "❌ Comando INSERT inválido\n";
+    cout << "❌ Error de sintaxis SELECT\n";
   }
 }
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 41 "cli.l"
+#line 114 "cli.l"
 {
-  int id;
-  sscanf(yytext, "SELECT users %d", &id);
-  auto res = db.search("users", id);
-  if (res)
-    for (auto &rv : *res)
-      cout << rv.column << "=" << rv.value << " ";
-  else
-    cout << "❌ No encontrado\n";
+  string line(yytext);
+  smatch match;
+  regex pattern(R"(DELETE\s+(\w+)\s+(\d+))");
+
+  if (regex_match(line, match, pattern)) {
+    string name = match[1];
+    int id = stoi(match[2]);
+
+    Table schema = flb::loadSchemaFromFile("cli_data/", name);
+    auto allData = flb::loadTableData("cli_data/", name, schema);
+
+    bool found = false;
+    vector<Record> updatedData;
+    for (const auto& rec : allData) {
+      if (rec[0].value != to_string(id)) {
+        updatedData.push_back(rec);
+      } else {
+        found = true;
+      }
+    }
+
+    if (found) {
+      db.remove(name, id);
+      flb::saveTableData("cli_data/", name, schema, updatedData);
+      cout << "🗑️ Registro eliminado\n";
+    } else {
+      cout << "❌ No se encontró el registro\n";
+    }
+  } else {
+    cout << "❌ Error de sintaxis DELETE\n";
+  }
 }
 	YY_BREAK
 case 5:
-/* rule 5 can match eol */
 YY_RULE_SETUP
-#line 51 "cli.l"
-{ /* Ignorar todo lo demás */ }
+#line 148 "cli.l"
+{
+  string line(yytext);
+  smatch match;
+  regex pattern(R"(UPDATE\s+(\w+)\s+(\d+)\s+(\w+)\s+\"([^\"]+)\")");
+
+  if (regex_match(line, match, pattern)) {
+    string name = match[1];
+    int id = stoi(match[2]);
+    string col = match[3];
+    string newVal = match[4];
+
+    Table schema = flb::loadSchemaFromFile("cli_data/", name);
+    auto allData = flb::loadTableData("cli_data/", name, schema);
+
+    bool found = false;
+    for (auto& rec : allData) {
+      if (rec[0].value == to_string(id)) {
+        found = true;
+        for (auto& rv : rec) {
+          if (rv.column == col) rv.value = newVal;
+        }
+        db.update(name, id, rec);
+        break;
+      }
+    }
+
+    if (found) {
+      flb::saveTableData("cli_data/", name, schema, allData);
+      cout << "✅ Actualizado: " << col << "=" << newVal << endl;
+    } else {
+      cout << "❌ Clave no encontrada para UPDATE\n";
+    }
+  } else {
+    cout << "❌ Error de sintaxis UPDATE\n";
+  }
+}
 	YY_BREAK
 case 6:
+/* rule 6 can match eol */
 YY_RULE_SETUP
-#line 52 "cli.l"
+#line 185 "cli.l"
+{ /* Ignorar */ }
+	YY_BREAK
+case 7:
+YY_RULE_SETUP
+#line 187 "cli.l"
 ECHO;
 	YY_BREAK
-#line 833 "lex.yy.cc"
+#line 948 "lex.yy.cc"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -1127,7 +1242,7 @@ static int yy_get_next_buffer (void)
 		while ( yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state )
 			{
 			yy_current_state = (int) yy_def[yy_current_state];
-			if ( yy_current_state >= 64 )
+			if ( yy_current_state >= 41 )
 				yy_c = yy_meta[yy_c];
 			}
 		yy_current_state = yy_nxt[yy_base[yy_current_state] + yy_c];
@@ -1155,11 +1270,11 @@ static int yy_get_next_buffer (void)
 	while ( yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state )
 		{
 		yy_current_state = (int) yy_def[yy_current_state];
-		if ( yy_current_state >= 64 )
+		if ( yy_current_state >= 41 )
 			yy_c = yy_meta[yy_c];
 		}
 	yy_current_state = yy_nxt[yy_base[yy_current_state] + yy_c];
-	yy_is_jam = (yy_current_state == 63);
+	yy_is_jam = (yy_current_state == 40);
 
 		return yy_is_jam ? 0 : yy_current_state;
 }
@@ -1835,14 +1950,20 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 52 "cli.l"
+#line 187 "cli.l"
 
 
 int main() {
-  cout << "🧪 CLI Flex para Citas Médicas. Escribe comandos como:\n";
-  cout << "  CREATE users\n  INSERT users 1 \"Alice\"\n  SELECT users 1\n\n";
+  cout << "📦 CLI Flex para Citas Médicas (Redis-style)\n";
+  cout << "Ejemplos:\n";
+  cout << "  CREATE users id:INT name:TEXT score:DOUBLE\n";
+  cout << "  INSERT users 1 \"Alice\" 99.5\n";
+  cout << "  SELECT users 1\n";
+  cout << "  UPDATE users 1 name \"Alicia\"\n";
+  cout << "  DELETE users 1\n\n";
   yylex();
   return 0;
 }
 
 int yywrap() { return 1; }
+

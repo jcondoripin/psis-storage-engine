@@ -98,27 +98,18 @@ SELECT[^\n]* {
     string name = match[1];
     int id = stoi(match[2]);
     cout << "🔍 SELECT en '" << name << "' con id=" << id << endl;
-
-    try {
-      auto res = db.search(name, id);
-      if (res) {
-        for (auto &v : *res)
-          cout << v.column << "=" << v.value << " ";
-        cout << endl;
-      } else {
-        cout << "❌ No encontrado\n";
-      }
-    } catch (const EmptyArrayException &e) {
-      cout << "⚠️ Árbol vacío: " << e.what() << endl;
-    } catch (const std::exception &e) {
-      cout << "⚠️ Excepción: " << e.what() << endl;
+    auto res = db.search(name, id);
+    if (res) {
+      for (auto &v : *res)
+        cout << v.column << "=" << v.value << " ";
+      cout << endl;
+    } else {
+      cout << "❌ No encontrado\n";
     }
-
   } else {
     cout << "❌ Error de sintaxis SELECT\n";
   }
 }
-
 
 DELETE[^\n]* {
   string line(yytext);
