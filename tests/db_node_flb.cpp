@@ -7,28 +7,8 @@
 
 int main()
 {
-  const std::string dir = "test_restore/";
-  const std::string table = "products";
-
-  // Parte 1: Crear y guardar datos en disco
-  {
-    DatabaseNode db(dir);
-
-    Table schema;
-    schema.addColumn({"id", KindColumn::INT});
-    schema.addColumn({"name", KindColumn::TEXT});
-    schema.addColumn({"price", KindColumn::DOUBLE});
-
-    db.createTable(table, schema, 0);
-    Record r1 = {{"id", "1", "INT"}, {"name", "Laptop", "TEXT"}, {"price", "999.99", "DOUBLE"}};
-    Record r2 = {{"id", "2", "INT"}, {"name", "Mouse", "TEXT"}, {"price", "25.5", "DOUBLE"}};
-
-    assert(db.insert(table, r1));
-    assert(db.insert(table, r2));
-
-    std::cout << "✅ Tabla y datos guardados en disco\n";
-  }
-
+  const std::string dir = "engine_test/";
+  const std::string table = "users";
   // Parte 2: Simular reinicio - cargar todo desde disco
   {
     DatabaseNode db(dir);
@@ -58,11 +38,11 @@ int main()
     }
 
     // Otro test: actualiza y verifica persistencia
-    db.update(table, 2, {{"id", "2", "INT"}, {"name", "Mouse", "TEXT"}, {"price", "19.99", "DOUBLE"}});
-    auto updated = db.search(table, 2);
+    db.update(table, 1, {{"id", "1", "INT"}, {"name", "ALICE UPDATEING", "TEXT"}});
+    auto updated = db.search(table, 1);
     if (updated)
     {
-      std::cout << "✅ Registro actualizado (ID 2): ";
+      std::cout << "✅ Registro actualizado (ID 1): ";
       for (const auto &v : *updated)
         std::cout << v.column << "=" << v.value << " ";
       std::cout << "\n";
