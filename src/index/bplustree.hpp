@@ -3,7 +3,9 @@
 #include "./bplustree_node/bplustree_node.hpp"
 #include "./bplustree_node/bplustree_leaf_node.hpp"
 #include "./bplustree_node/bplustree_internal_node.hpp"
-#include "../util/bplustree_exceptions.hpp"
+#include "../util/exceptions/bplustree_exceptions.hpp"
+#include "../util/event.hpp"
+#include "bplustree_event.hpp"
 #include <memory>
 #include <tuple>
 #include <optional>
@@ -19,24 +21,29 @@ private:
   int order;
 
 public:
+  mutable Event<BPlusTreeEvent<Key, Value>> events;
   BPlusTree<Key, Value>(int m = 4);
 
   /**
    * Insert a key-value pair into the B+ tree
    * @param key The key to insert
    * @param value The value associated with the key
-   * @return void
-   * @throws KeyAlreadyExistsException if the key already exists in the tree
+   * @return bool If the key has inserted
    */
-  void insert(const Key &key, const Value &value)
+  bool insert(const Key &key, const Value &value)
   {
+    emitEvent(BPlusTreeEventType::INSERT_STARTED, key, value, "Inicio de inserción");
+
     if (!root)
     {
       root = std::make_shared<BPlusTreeLeafNode<Key, Value>>();
       rootLinked = std::dynamic_pointer_cast<BPlusTreeLeafNode<Key, Value>>(root);
       auto leaf = std::dynamic_pointer_cast<BPlusTreeLeafNode<Key, Value>>(root);
       leaf->insertValue(key, value);
-      return;
+
+      emitEvent(BPlusTreeEventType::INSERT_COMPLETED, key, value, "Clave insertada correctamente");
+
+      return true;
     }
 
     try
@@ -49,11 +56,18 @@ public:
         auto newRootNode = std::make_shared<BPlusTreeInternalNode<Key, Value>>();
         newRootNode->insertChild(firstNode, secondNode, promotedKey);
         this->root = newRootNode;
+        emitEvent(BPlusTreeEventType::ROOT_REPLACED, std::nullopt, std::nullopt, "Nueva raíz tras split");
       }
+
+      emitEvent(BPlusTreeEventType::INSERT_COMPLETED, key, value, "Clave insertada correctamente");
+
+      return true;
     }
     catch (const KeyAlreadyExistsException &)
     {
-      throw KeyAlreadyExistsException("Key already exists in B+ Tree: " + std::to_string(key));
+      emitEvent(BPlusTreeEventType::INSERT_FAILED_EXISTS, key, value, "Clave ya existe");
+
+      return false;
     }
   }
 
@@ -65,6 +79,8 @@ public:
    */
   std::optional<Value> search(const Key &key) const
   {
+    emitEvent(BPlusTreeEventType::SEARCH_STARTED, key, std::nullopt, "Inicio de search");
+
     try
     {
       auto currentNode = this->root;
@@ -73,10 +89,16 @@ public:
         auto internalNode = std::dynamic_pointer_cast<BPlusTreeInternalNode<Key, Value>>(currentNode);
         currentNode = internalNode->getChildForKey(key);
       }
-      return currentNode->getValueByKey(key);
+      auto value = currentNode->getValueByKey(key);
+
+      emitEvent(BPlusTreeEventType::SEARCH_HIT, key, value, "Search hit");
+
+      return value;
     }
     catch (const KeyNotFoundException &)
     {
+      emitEvent(BPlusTreeEventType::SEARCH_MISS, key, std::nullopt, "Search miss");
+
       return std::nullopt;
     }
   };
@@ -88,11 +110,85 @@ public:
    */
   bool remove(const Key &key)
   {
+    emitEvent(BPlusTreeEventType::REMOVE_STARTED, key, std::nullopt, "Inicio de remove");
+
     if (!root)
+    {
+      emitEvent(BPlusTreeEventType::REMOVE_FAILED_NOT_FOUND, key, std::nullopt, "Arbol vacio");
       return false;
-    auto hasRemoved = removeRecursive(root, key);
-    return !hasRemoved;
+    }
+
+    try
+    {
+      auto hasRemoved = !removeRecursive(root, key);
+
+      if (hasRemoved)
+        emitEvent(BPlusTreeEventType::REMOVE_COMPLETED, key, std::nullopt, "Valor eliminado");
+      else
+        emitEvent(BPlusTreeEventType::REMOVE_FAILED_NOT_FOUND, key, std::nullopt, "Clave no encontrada");
+
+      return hasRemoved;
+    }
+    catch (const KeyNotFoundException &)
+    {
+      emitEvent(BPlusTreeEventType::REMOVE_FAILED_NOT_FOUND, key, std::nullopt, "Clave no encontrada");
+
+      return false;
+    }
   };
+
+  /**
+   * Actualiza el valor asociado a una clave existente en el árbol B+.
+   *
+   * Si la clave se encuentra, su valor es reemplazado por el nuevo.
+   * Se emiten eventos que indican el inicio, éxito o fallo de la operación.
+   *
+   * @param key La clave cuyo valor se desea actualizar.
+   * @param newValue El nuevo valor a asociar a la clave.
+   * @return true si la actualización fue exitosa, false si la clave no existe.
+   */
+  bool update(const Key &key, const Value &newValue)
+  {
+    emitEvent(BPlusTreeEventType::UPDATE_STARTED, key, newValue, "Inicio de update");
+    try
+    {
+      auto node = root;
+
+      while (node && !toLeaf(node))
+      {
+        node = toInternal(node)->getChildForKey(key);
+      }
+
+      toLeaf(node)->updateValueByKey(key, newValue);
+
+      emitEvent(BPlusTreeEventType::UPDATE_COMPLETED, key, newValue, "Update completado");
+
+      return true;
+    }
+    catch (const KeyNotFoundException &)
+    {
+      emitEvent(BPlusTreeEventType::UPDATE_FAILED_NOT_FOUND, key, std::nullopt, "Update fallido: clave no existe");
+
+      return false;
+    }
+  }
+
+  /**
+   * @brief Devuelve todos los valores almacenados en el árbol en orden de clave.
+   * @return std::vector<Value> array de valores.
+   */
+  std::vector<Value> traverse() const
+  {
+    std::vector<Value> result;
+    auto node = rootLinked;
+    while (node)
+    {
+      for (const auto &v : node->values)
+        result.push_back(v);
+      node = node->next;
+    }
+    return result;
+  }
 
   /**
    * Imprime el contenido del árbol B+ en orden
@@ -137,6 +233,16 @@ public:
   }
 
 private:
+  void emitEvent(
+      BPlusTreeEventType type,
+      std::optional<Key> key = std::nullopt,
+      std::optional<Value> value = std::nullopt,
+      const std::string &message = "") const
+  {
+    BPlusTreeEvent<Key, Value> evt{type, key, value, message};
+    this->events.emit(evt);
+  }
+
   /**
    * @brief Elimina recursivamente una clave y su valor asociado de un subárbol B+.
    *
@@ -159,7 +265,13 @@ private:
       {
         return false;
       }
-      return leaf->isUnderflow(order);
+
+      bool underflow = leaf->isUnderflow(order);
+
+      if (underflow)
+        emitEvent(BPlusTreeEventType::TREE_EMPTY, std::nullopt, std::nullopt, "Underflow detectado");
+
+      return underflow;
     }
     else
     {
@@ -203,6 +315,8 @@ private:
         {
           Key keyleft = leftSibling->keys.getArray().back();
 
+          emitEvent(BPlusTreeEventType::BORROW_FROM_LEFT, keyleft, std::nullopt, "Borrow desde nodo izquierdo");
+
           if (childLeaf)
           {
             toLeaf(child)->insertValue(keyleft, leftSibling->getValueByKey(keyleft));
@@ -227,6 +341,8 @@ private:
         else if (rightSibling && rightSibling->canBorrow(this->order))
         {
           Key keyright = rightSibling->keys.getArray().front();
+
+          emitEvent(BPlusTreeEventType::BORROW_FROM_RIGHT, keyright, std::nullopt, "Borrow desde nodo derecho");
 
           if (childLeaf)
           {
@@ -264,6 +380,8 @@ private:
               toLeaf(leftSibling)->next = toLeaf(child)->next;
 
               internal->removeChildByKey(toLeaf(child)->keys.getArray().front(), false);
+
+              emitEvent(BPlusTreeEventType::NODE_MERGED_LEAF, toLeaf(child)->keys.getArray().front(), std::nullopt, "Merge de nodos hoja");
             }
             else
             {
@@ -285,6 +403,8 @@ private:
               }
               internal->removeChildByKey(internal->keys.getArray()[position], false);
 
+              emitEvent(BPlusTreeEventType::NODE_MERGED_INTERNAL, keyleft, std::nullopt, "Merge de nodos internos");
+
               if (internal == this->root && internal->keys.empty())
               {
                 this->root = leftSibling;
@@ -305,6 +425,8 @@ private:
               toLeaf(child)->next = toLeaf(rightSibling)->next;
 
               internal->removeChildByKey(toLeaf(rightSibling)->keys.getArray().front(), false);
+
+              emitEvent(BPlusTreeEventType::NODE_MERGED_LEAF, toLeaf(child)->keys.getArray().front(), std::nullopt, "Merge de nodos hoja");
             }
             else
             {
@@ -327,9 +449,14 @@ private:
 
               internal->removeChildByKey(internal->keys.getArray()[position], false);
 
+              emitEvent(BPlusTreeEventType::NODE_MERGED_INTERNAL, keyleft, std::nullopt, "Merge de nodos internos");
+
               if (internal == this->root && internal->keys.empty())
               {
                 this->root = childInternal;
+
+                emitEvent(BPlusTreeEventType::ROOT_REPLACED, std::nullopt, std::nullopt, "Reemplazo de raíz tras merge");
+
                 return false;
               }
             }
@@ -362,7 +489,11 @@ private:
       toLeaf(leafNode)->insertValue(key, value);
       if (leafNode->isOverflow(this->order))
       {
-        return leafNode->split();
+        auto splitResult = leafNode->split();
+
+        emitEvent(BPlusTreeEventType::NODE_SPLIT_LEAF, std::get<2>(splitResult), std::nullopt, "Split de nodo hoja");
+
+        return splitResult;
       }
       else
       {
@@ -380,7 +511,11 @@ private:
         internalNode->insertChild(firstNode, secondNode, promotedKey);
         if (internalNode->isOverflow(this->order))
         {
-          return internalNode->split();
+          auto splitResult = internalNode->split();
+
+          emitEvent(BPlusTreeEventType::NODE_SPLIT_INTERNAL, std::get<2>(splitResult), std::nullopt, "Split de nodo interno");
+
+          return splitResult;
         }
         else
         {
@@ -457,9 +592,9 @@ private:
 template <typename Key, typename Value>
 inline BPlusTree<Key, Value>::BPlusTree(int m)
 {
-  if (m < 2)
+  if (m < 4)
   {
-    throw std::invalid_argument("El orden del árbol B+ debe ser al menos 2.");
+    throw std::invalid_argument("El orden del árbol B+ debe ser al menos 4.");
   }
   this->order = m;
   this->root = nullptr;

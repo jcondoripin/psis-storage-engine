@@ -1,7 +1,7 @@
 #include <iostream>
 #include <cassert>
 #include <string>
-#include "../src/util/bplustree_exceptions.hpp"
+#include "../src/util/exceptions/bplustree_exceptions.hpp"
 #include "../src/index/bplustree_node/bplustree_leaf_node.hpp"
 #include "../src/index/bplus_vector.hpp"
 

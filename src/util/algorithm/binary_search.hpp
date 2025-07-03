@@ -1,7 +1,7 @@
 #pragma once
 
 #include <vector>
-#include "../general_exceptions.hpp"
+#include "../exceptions/general_exceptions.hpp"
 
 /**
  * Performs a binary search on a sorted array.

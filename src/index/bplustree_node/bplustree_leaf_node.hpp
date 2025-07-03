@@ -1,7 +1,7 @@
 #pragma once
 
 #include "bplustree_node.hpp"
-#include "../../util/bplustree_exceptions.hpp"
+#include "../../util/exceptions/bplustree_exceptions.hpp"
 
 /**
  * @brief Leaf node for a B+ Tree.
@@ -84,6 +84,25 @@ public:
       throw KeyNotFoundException(std::to_string(key));
     }
   };
+
+  /**
+   * @brief Updates the value associated with a key in the leaf node.
+   * @param key Key whose value you want to update.
+   * @param newValue New value to assign.
+   * @throws KeyNotFoundException if the key is not found in the leaf node.
+   */
+  void updateValueByKey(const Key &key, const Value &newValue)
+  {
+    int position = this->keys.searchElement(key);
+    if (position >= 0)
+    {
+      values[position] = newValue;
+    }
+    else
+    {
+      throw KeyNotFoundException(std::to_string(key));
+    }
+  }
 
   /**
    * @brief Get the value associated with a key.
