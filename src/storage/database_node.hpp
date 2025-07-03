@@ -15,10 +15,10 @@ using Record = std::vector<RecordValue>;
 
 /**
  * @class DatabaseNode
- * @brief Gestor de tablas y registros en disco usando B+Tree para índices.
+ * @brief Gestor de tablas y registros en disco usando B+Tree.
  *
  * Ofrece operaciones CRUD con persistencia en archivos binarios. Cada tabla
- * mantiene un archivo de metadatos (.meta) y un archivo de datos (.tbl).
+ * mantiene un archivo de metadatos (.meta) y un archivo de datos (.tbl) en un directorio data.
  */
 class DatabaseNode
 {
