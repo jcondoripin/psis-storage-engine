@@ -3,7 +3,7 @@
 #include "./bplustree_node/bplustree_node.hpp"
 #include "./bplustree_node/bplustree_leaf_node.hpp"
 #include "./bplustree_node/bplustree_internal_node.hpp"
-#include "../util/bplustree_exceptions.hpp"
+#include "../util/exceptions/bplustree_exceptions.hpp"
 #include "../util/event.hpp"
 #include "bplustree_event.hpp"
 #include <memory>
@@ -171,6 +171,23 @@ public:
 
       return false;
     }
+  }
+
+  /**
+   * @brief Devuelve todos los valores almacenados en el árbol en orden de clave.
+   * @return std::vector<Value> array de valores.
+   */
+  std::vector<Value> traverse() const
+  {
+    std::vector<Value> result;
+    auto node = rootLinked;
+    while (node)
+    {
+      for (const auto &v : node->values)
+        result.push_back(v);
+      node = node->next;
+    }
+    return result;
   }
 
   /**

@@ -3,7 +3,7 @@
 #include <vector>
 #include "../util/algorithm/binary_search.hpp"
 #include "../util/algorithm/lower_bound.hpp"
-#include "../util/general_exceptions.hpp"
+#include "../util/exceptions/general_exceptions.hpp"
 
 /**
  * @brief BPlusVector maintains a sorted vector with fast binary search and insertion.

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "bplustree_node.hpp"
-#include "../../util/bplustree_exceptions.hpp"
+#include "../../util/exceptions/bplustree_exceptions.hpp"
 
 /**
  * @brief Leaf node for a B+ Tree.
