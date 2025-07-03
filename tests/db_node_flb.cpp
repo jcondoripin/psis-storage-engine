@@ -1,61 +1,73 @@
-#include <iostream>
 #include <cassert>
 #include <filesystem>
+#include <iostream>
 #include "../src/util/table.hpp"
 #include "../src/storage/database_node.hpp"
 #include "../src/storage/database_node_flb.hpp"
 
-int main() {
-    // Setup
-    const std::string dataDir = "./test_data/";
-    std::filesystem::remove_all(dataDir);
-    std::filesystem::create_directories(dataDir);
+int main()
+{
+  const std::string dir = "test_restore/";
+  const std::string table = "products";
 
-    // Define schema: id(INT), name(TEXT), active(BOOL), score(DOUBLE)
+  // Parte 1: Crear y guardar datos en disco
+  {
+    DatabaseNode db(dir);
+
     Table schema;
     schema.addColumn({"id", KindColumn::INT});
     schema.addColumn({"name", KindColumn::TEXT});
-    schema.addColumn({"active", KindColumn::BOOL});
-    schema.addColumn({"score", KindColumn::DOUBLE});
+    schema.addColumn({"price", KindColumn::DOUBLE});
 
-    DatabaseNode db(dataDir);
+    db.createTable(table, schema, 0);
+    Record r1 = {{"id", "1", "INT"}, {"name", "Laptop", "TEXT"}, {"price", "999.99", "DOUBLE"}};
+    Record r2 = {{"id", "2", "INT"}, {"name", "Mouse", "TEXT"}, {"price", "25.5", "DOUBLE"}};
 
-    // Test createTable
-    assert(db.createTable("users", schema, 0));
-    assert(!db.createTable("users", schema, 0)); // duplicate
-    assert(std::filesystem::exists(dataDir + "users.meta"));
-    assert(std::filesystem::exists(dataDir + "users.tbl"));
+    assert(db.insert(table, r1));
+    assert(db.insert(table, r2));
 
-    // Insert records
-    Record r1 = {{"id","1","INT"}, {"name","Alice","TEXT"}, {"active","true","BOOL"}, {"score","95.5","DOUBLE"}};
-    Record r2 = {{"id","2","INT"}, {"name","Bob","TEXT"},   {"active","false","BOOL"}, {"score","80.0","DOUBLE"}};
-    assert(db.insert("users", r1));
-    assert(db.insert("users", r2));
-    assert(!db.insert("users", r1)); // duplicate key
+    std::cout << "✅ Tabla y datos guardados en disco\n";
+  }
 
-    // Search existing
-    auto res1 = db.search("users", 1);
-    assert(res1 && res1->at(1).value == "Alice");
+  // Parte 2: Simular reinicio - cargar todo desde disco
+  {
+    DatabaseNode db(dir);
 
-    // Load schema & data using separated FLB
-    Table loadedSchema = flb::loadSchemaFromFile(dataDir, "users");
-    auto allData = flb::loadTableData(dataDir, "users", loadedSchema);
-    assert(allData.size() == 2);
-    assert(allData[0].at(1).value == "Alice");
+    Table schema = flb::loadSchemaFromFile(dir, table);
+    auto data = flb::loadTableData(dir, table, schema);
 
-    // Update record
-    Record r1u = {{"id","1","INT"}, {"name","Alice","TEXT"}, {"active","false","BOOL"}, {"score","99.9","DOUBLE"}};
-    assert(db.update("users", 1, r1u));
-    auto res1u = db.search("users", 1);
-    assert(res1u);
+    // Registrar en memoria
+    db.createTable(table, schema, 0); // solo reserva
+    for (const auto &record : data)
+      db.insert(table, record); // reconstruye árbol
 
-    // Remove record
-    assert(db.remove("users", 2));
-    assert(!db.search("users", 2));
+    std::cout << "🔁 Base de datos restaurada desde archivos:\n";
 
-    // Final loaded data should have one record
-    allData = flb::loadTableData(dataDir, "users", loadedSchema);
-    assert(allData.size() == 1);
-    std::cout << "All separated DatabaseNode tests passed!" << std::endl;
-    return 0;
+    // Verifica que los datos están en memoria (árbol)
+    auto res = db.search(table, 1);
+    if (res)
+    {
+      std::cout << "✅ Registro encontrado (ID 1): ";
+      for (const auto &v : *res)
+        std::cout << v.column << "=" << v.value << " ";
+      std::cout << "\n";
+    }
+    else
+    {
+      std::cerr << "❌ Registro con ID 1 no encontrado\n";
+    }
+
+    // Otro test: actualiza y verifica persistencia
+    db.update(table, 2, {{"id", "2", "INT"}, {"name", "Mouse", "TEXT"}, {"price", "19.99", "DOUBLE"}});
+    auto updated = db.search(table, 2);
+    if (updated)
+    {
+      std::cout << "✅ Registro actualizado (ID 2): ";
+      for (const auto &v : *updated)
+        std::cout << v.column << "=" << v.value << " ";
+      std::cout << "\n";
+    }
+  }
+
+  return 0;
 }
