@@ -210,5 +210,15 @@ namespace flb
     }
     return records;
   }
+  /**
+   * @brief Guarda todos los datos sobrescribiendo el archivo .tbl (alias de rewriteDataFile).
+   */
+  inline void saveTableData(const std::string &path,
+                            const std::string &name,
+                            const Table &schema,
+                            const std::vector<Record> &records)
+  {
+    rewriteDataFile(path, name, records);
+  }
 
 }
