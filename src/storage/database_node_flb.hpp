@@ -9,7 +9,36 @@
 #include <string>
 #include "../util/table.hpp"
 
-using Record = std::vector<RecordValue>;
+struct Record
+{
+  std::vector<RecordValue> values;
+
+  Record() : values({}) {}
+  Record(std::vector<RecordValue> _v) : values(_v) {}
+
+  Record &operator=(const Record &other)
+  {
+    for (const auto &rv : other.values)
+    {
+      bool found = false;
+      for (int i = 0; i < values.size(); i++)
+      {
+        if (values[i].column.compare(rv.column) == 0)
+        {
+          values[i].value = rv.value;
+          values[i].kind = rv.kind;
+          found = true;
+          break;
+        }
+      }
+      if (!found)
+      {
+        values.push_back(rv);
+      }
+    }
+    return *this;
+  }
+};
 
 /**
  * @namespace flb
@@ -88,7 +117,7 @@ namespace flb
     std::ofstream out(path + name + ".tbl", std::ios::binary | std::ios::app);
     if (!out)
       throw std::runtime_error("Failed to open data file for insert: " + name);
-    for (const auto &rv : record)
+    for (const auto &rv : record.values)
       writeByKind(out, rv.kind, rv.value);
   }
 
@@ -107,7 +136,7 @@ namespace flb
     if (!out)
       throw std::runtime_error("Failed to open data file for rewrite: " + name);
     for (const auto &rec : records)
-      for (const auto &rv : rec)
+      for (const auto &rv : rec.values)
         writeByKind(out, rv.kind, rv.value);
   }
 
@@ -204,12 +233,13 @@ namespace flb
           break;
         }
         }
-        rec.push_back(rv);
+        rec.values.push_back(rv);
       }
       records.push_back(rec);
     }
     return records;
   }
+
   /**
    * @brief Guarda todos los datos sobrescribiendo el archivo .tbl (alias de rewriteDataFile).
    */
@@ -220,5 +250,4 @@ namespace flb
   {
     rewriteDataFile(path, name, records);
   }
-
 }

@@ -28,27 +28,30 @@ int main()
   assert(std::filesystem::exists(dataDir + "users.tbl"));
 
   // Insert records
-  Record r1 = {{"id", "1", "INT"}, {"name", "Alice", "TEXT"}, {"active", "true", "BOOL"}, {"score", "95.5", "DOUBLE"}};
-  Record r2 = {{"id", "2", "INT"}, {"name", "Bob", "TEXT"}, {"active", "false", "BOOL"}, {"score", "80.0", "DOUBLE"}};
+  Record r1;
+  r1.values = {{"id", "1", "INT"}, {"name", "Alice", "TEXT"}, {"active", "true", "BOOL"}, {"score", "95.5", "DOUBLE"}};
+  Record r2;
+  r1.values = {{"id", "2", "INT"}, {"name", "Bob", "TEXT"}, {"active", "false", "BOOL"}, {"score", "80.0", "DOUBLE"}};
   assert(db.insert("users", r1));
   assert(db.insert("users", r2));
   assert(!db.insert("users", r1)); // duplicate key
 
   // Search existing
   auto res1 = db.search("users", 1);
-  assert(res1 && res1->at(1).value == "Alice");
+  assert(res1 && res1->values.at(1).value == "Alice");
 
   // Load schema & data using separated FLB
   Table loadedSchema = flb::loadSchemaFromFile(dataDir, "users");
   auto allData = flb::loadTableData(dataDir, "users", loadedSchema);
   assert(allData.size() == 2);
-  assert(allData[0].at(1).value == "Alice");
+  assert(allData[0].values.at(1).value == "Alice");
 
   // Update record
-  Record r1u = {{"id", "1", "INT"}, {"name", "Alice", "TEXT"}, {"active", "false", "BOOL"}, {"score", "99.9", "DOUBLE"}};
+  Record r1u;
+  r1u.values = {{"id", "1", "INT"}, {"name", "Alice", "TEXT"}, {"active", "false", "BOOL"}, {"score", "99.9", "DOUBLE"}};
   assert(db.update("users", 1, r1u));
   auto res1u = db.search("users", 1);
-  assert(res1u && res1u->at(3).value == "99.9");
+  assert(res1u && res1u->values.at(3).value == "99.9");
 
   // Remove record
   assert(db.remove("users", 2));

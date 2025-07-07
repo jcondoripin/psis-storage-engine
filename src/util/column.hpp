@@ -3,7 +3,7 @@
 #include <fstream>
 #include <stdexcept>
 #include <string>
-#include <sstream>  // ✅ necesario para std::istringstream
+#include <sstream>
 
 enum class KindColumn
 {

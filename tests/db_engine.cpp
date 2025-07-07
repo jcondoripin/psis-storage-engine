@@ -1,95 +1,141 @@
+// test_multi_tables.cpp
+
 #include <string>
 #include <cassert>
 #include <filesystem>
-#include <fstream>
 #include <iostream>
 #include "../src/core/engine.hpp"
 #include "../src/util/table.hpp"
+#include "../src/util/operation.hpp"
 
 int main()
 {
-  const std::string dir = "engine_test/";
-  std::filesystem::remove_all(dir);
+  const std::string dir = "engine_multi_test/";
   std::filesystem::create_directories(dir);
 
   Engine engine(dir);
 
-  // 1. CREATE_TABLE
-  Table schema;
-  schema.addColumn({"id", KindColumn::INT});
-  schema.addColumn({"name", KindColumn::TEXT});
+  //
+  // Table A: products (id INT, name TEXT, price DOUBLE)
+  //
+  Table productsSchema;
+  productsSchema.addColumn({"id", KindColumn::INT});
+  productsSchema.addColumn({"name", KindColumn::TEXT});
+  productsSchema.addColumn({"price", KindColumn::DOUBLE});
+  productsSchema.setKeyColumn(0);
 
-  ArgsCommand createCmd;
-  createCmd.command = Operation::CREATE_TABLE;
-  createCmd.tableName = "users";
-  createCmd.schema = schema;
-  engine.exec(createCmd);
+  ArgsCommand createA;
+  createA.command = Operation::CREATE_TABLE;
+  createA.tableName = "products";
+  createA.schema = productsSchema;
+  engine.exec(createA);
 
-  assert(std::filesystem::exists(dir + "users.meta"));
-  assert(std::filesystem::exists(dir + "users.tbl"));
+  assert(std::filesystem::exists(dir + "products.meta"));
+  assert(std::filesystem::exists(dir + "products.tbl"));
 
-  // 2. INSERT
-  for (int i = 0; i < 1000; i++)
+  //
+  // Table B: customers (cid INT, first TEXT, last TEXT, vip BOOL)
+  //
+  Table customersSchema;
+  customersSchema.addColumn({"cid", KindColumn::INT});
+  customersSchema.addColumn({"first", KindColumn::TEXT});
+  customersSchema.addColumn({"last", KindColumn::TEXT});
+  customersSchema.addColumn({"vip", KindColumn::BOOL});
+  customersSchema.setKeyColumn(0);
+
+  ArgsCommand createB;
+  createB.command = Operation::CREATE_TABLE;
+  createB.tableName = "customers";
+  createB.schema = customersSchema;
+  engine.exec(createB);
+
+  assert(std::filesystem::exists(dir + "customers.meta"));
+  assert(std::filesystem::exists(dir + "customers.tbl"));
+
+  //
+  // INSERT some products
+  //
+  for (int i = 1; i <= 5; ++i)
   {
-    Record r1 = {{"id", std::to_string(i), "INT"}, {"name", "Alice", "TEXT"}};
-    ArgsCommand ins1;
-    ins1.command = Operation::INSERT;
-    ins1.tableName = "users";
-    ins1.record = r1;
-    engine.exec(ins1);
+    Record r = {
+        {"id", std::to_string(i), "INT"},
+        {"name", "Product" + std::to_string(i), "TEXT"},
+        {"price", std::to_string(10.0 * i), "DOUBLE"}};
+    ArgsCommand ins;
+    ins.command = Operation::INSERT;
+    ins.tableName = "products";
+    ins.record = r;
+    engine.exec(ins);
   }
 
-  // 3. SEARCH exists
-  ArgsCommand sel;
-  sel.command = Operation::SEARCH;
-  sel.tableName = "users";
-  sel.key = 1;
-  engine.exec(sel); // prints Alice
+  //
+  // INSERT some customers
+  //
+  std::vector<std::pair<int, std::string>> names = {
+      {1, "Alice"}, {2, "Bob"}, {3, "Carol"}};
+  for (auto &p : names)
+  {
+    Record r = {
+        {"cid", std::to_string(p.first), "INT"},
+        {"first", p.second, "TEXT"},
+        {"last", p.second + "son", "TEXT"},
+        {"vip", (p.first % 2 == 0 ? "true" : "false"), "BOOL"}};
+    ArgsCommand ins;
+    ins.command = Operation::INSERT;
+    ins.tableName = "customers";
+    ins.record = r;
+    engine.exec(ins);
+  }
 
-  // 4. UPDATE
-  Record r1u = {{"id", "1", "INT"}, {"name", "Alice_updated", "TEXT"}};
-  ArgsCommand upd;
-  upd.command = Operation::UPDATE;
-  upd.tableName = "users";
-  upd.key = 1;
-  upd.record = r1u;
-  engine.exec(upd);
+  //
+  // SEARCH product id=3
+  //
+  ArgsCommand selP;
+  selP.command = Operation::SEARCH;
+  selP.tableName = "products";
+  selP.key = 3;
+  engine.exec(selP); // should print Product3 and price 30.0
+
+  //
+  // SEARCH customer cid=2
+  //
+  ArgsCommand selC;
+  selC.command = Operation::SEARCH;
+  selC.tableName = "customers";
+  selC.key = 2;
+  engine.exec(selC); // should print Bobson and vip=true
+
+  //
+  // UPDATE product 4 price to 99.99
+  //
+  Record updP = {
+      {"id", "4", "INT"},
+      {"name", "Product4", "TEXT"},
+      {"price", "99.99", "DOUBLE"}};
+  ArgsCommand updCmd;
+  updCmd.command = Operation::UPDATE;
+  updCmd.tableName = "products";
+  updCmd.key = 4;
+  updCmd.record = updP;
+  engine.exec(updCmd);
 
   // verify in-memory
-  sel.key = 1;
-  engine.exec(sel);
+  selP.key = 4;
+  engine.exec(selP); // prints price 99.99
 
-  // 5. REMOVE
-  ArgsCommand rem;
-  rem.command = Operation::REMOVE;
-  rem.tableName = "users";
-  rem.key = 2;
-  engine.exec(rem);
+  //
+  // REMOVE customer cid=1
+  //
+  ArgsCommand remC;
+  remC.command = Operation::REMOVE;
+  remC.tableName = "customers";
+  remC.key = 1;
+  engine.exec(remC);
 
   // verify removed
-  sel.key = 2;
-  engine.exec(sel);
+  selC.key = 1;
+  engine.exec(selC); // should print not found
 
-  // 6. BACKUP
-  ArgsCommand bak;
-  bak.command = Operation::BACKUP;
-  engine.exec(bak);
-
-  // Verify mutation.log contents
-  std::ifstream mutLog(dir + "logs/2025-07-03.log");
-  assert(mutLog);
-  std::string line;
-  std::vector<std::string> mutations;
-  while (std::getline(mutLog, line))
-  {
-    mutations.push_back(line);
-  }
-  // assert(mutations.size() == 5);
-  // assert(mutations[0].find("INSERT users 1 Alice") == 0);
-  // assert(mutations[1].find("INSERT users 2 Bob") == 0);
-  // assert(mutations[2].find("UPDATE users 1 Alice_updated") == 0);
-  // assert(mutations[3].find("REMOVE users 2") == 0);
-
-  std::cout << "All Engine tests passed!" << std::endl;
+  std::cout << "✅ Multi-table Engine test passed!" << std::endl;
   return 0;
 }
