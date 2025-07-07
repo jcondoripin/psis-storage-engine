@@ -16,27 +16,60 @@ struct ArgsCommand
 {
   Operation command;
   std::string tableName;
-  int64_t key = -1;
+  int64_t key = 0;
   Table schema = {};
   Record record = {};
-  int keyColumn = 0;
 };
 
 class Engine
 {
 public:
   explicit Engine(const std::string &dir)
-      : dataDir_(dir), db_(dir) {}
+      : dataDir_(dir), db_(dir)
+  {
+    for (auto &entry : std::filesystem::directory_iterator(dataDir_))
+    {
+      if (!entry.is_regular_file())
+        continue;
+
+      auto ext = entry.path().extension().string();
+      if (ext != ".meta")
+        continue;
+
+      std::string table = entry.path().stem().string();
+
+      Table schema;
+
+      {
+        std::ifstream metaIn(dataDir_ + table + ".meta", std::ios::binary);
+        if (!metaIn)
+          throw std::runtime_error("No se pudo abrir " + table + ".meta");
+        schema.binary_read(metaIn);
+      }
+
+      db_.createTableSilent(table, schema);
+
+      std::ifstream dataIn(dataDir_ + table + ".tbl", std::ios::binary);
+
+      if (!dataIn)
+        continue;
+
+      std::vector<Record> data = flb::loadTableData(dir, table, schema);
+
+      for (const auto &record : data)
+        db_.insertSilent(table, record);
+    }
+  }
 
   void exec(ArgsCommand args)
   {
-    auto [command, tableName, key, schema, record, keyColumn] = args;
+    auto [command, tableName, key, schema, record] = args;
 
     std::istringstream ss(operationToString(command));
 
     if (command == Operation::CREATE_TABLE)
     {
-      bool ok = db_.createTable(tableName, schema, keyColumn);
+      bool ok = db_.createTable(tableName, schema);
       if (ok)
       {
         logCreateTable(command, tableName, schema);
@@ -60,7 +93,7 @@ public:
       auto res = db_.search(tableName, key);
       if (res)
       {
-        for (const auto &v : *res)
+        for (const auto &v : (*res).values)
           std::cout << v.column << "=" << v.value << " ";
         std::cout << "\n";
       }
@@ -82,7 +115,9 @@ public:
       if (db_.remove(tableName, key))
       {
         std::cout << "✅ Eliminado: " << key << "\n";
-        logMutation(command, tableName, {{"id", std::to_string(key), "INT"}});
+        Record r;
+        r.values.push_back({"id", std::to_string(key), "INT"});
+        logMutation(command, tableName, r);
       }
       else
         std::cerr << "❌ No existe clave para eliminar\n";
@@ -90,7 +125,7 @@ public:
     else if (command == Operation::BACKUP)
     {
       loadBackup();
-      std::cout << "🗂️  Backup guardado en backup.log\n";
+      std::cout << "🗂️ Backup guardado en backup.log\n";
     }
     else
     {
@@ -129,7 +164,7 @@ private:
       throw std::runtime_error("No se pudo abrir el archivo de log: " + logFile);
 
     log << operationToString(op) << " " << table;
-    for (const auto &rv : r)
+    for (const auto &rv : r.values)
       log << ", " << rv.column << ":" << rv.value << ":" << rv.kind;
     log << "\n";
   }

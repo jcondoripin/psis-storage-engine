@@ -19,6 +19,7 @@ struct RecordValue
 class Table
 {
 private:
+  std::size_t keyCol;
   std::unordered_map<std::string, KindColumn> columns_; // name -> kind (ahora es KindColumn)
   std::vector<std::string> column_names_;               // ordered column names
 
@@ -33,6 +34,18 @@ public:
     }
     columns_[col.name] = col.kind;
     column_names_.push_back(col.name);
+  }
+
+  std::size_t getKeyColumn() const
+  {
+    return this->keyCol;
+  }
+
+  void setKeyColumn(std::size_t idx)
+  {
+    if (idx >= column_names_.size())
+      throw std::invalid_argument("Key column index out of range");
+    keyCol = idx;
   }
 
   KindColumn getColumnKind(const std::string &name) const
@@ -55,10 +68,12 @@ public:
     return columns_;
   }
 
-  virtual void binary_write(std::ofstream &out) const
+  void binary_write(std::ofstream &out) const
   {
-    uint32_t count = static_cast<uint32_t>(column_names_.size());
-    out.write(reinterpret_cast<const char *>(&count), sizeof(count));
+    uint32_t totalCols = static_cast<uint32_t>(column_names_.size());
+    out.write(reinterpret_cast<const char *>(&totalCols), sizeof(totalCols));
+    uint32_t keyIdx = static_cast<uint32_t>(keyCol);
+    out.write(reinterpret_cast<const char *>(&keyIdx), sizeof(keyIdx));
     for (const auto &colName : column_names_)
     {
       Column col{colName, columns_.at(colName)};
@@ -66,13 +81,16 @@ public:
     }
   }
 
-  virtual void binary_read(std::ifstream &in)
+  void binary_read(std::ifstream &in)
   {
     columns_.clear();
     column_names_.clear();
-    uint32_t count;
-    in.read(reinterpret_cast<char *>(&count), sizeof(count));
-    for (uint32_t i = 0; i < count; ++i)
+    uint32_t totalCols;
+    in.read(reinterpret_cast<char *>(&totalCols), sizeof(totalCols));
+    uint32_t keyIdx;
+    in.read(reinterpret_cast<char *>(&keyIdx), sizeof(keyIdx));
+    keyCol = static_cast<std::size_t>(keyIdx);
+    for (uint32_t i = 0; i < totalCols; ++i)
     {
       Column col;
       col.binary_read(in);

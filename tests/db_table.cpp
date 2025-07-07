@@ -3,23 +3,15 @@
 #include <iostream>
 #include <fstream>
 
-// Concrete subclass of Table for testing
-class MyTable : public Table
-{
-public:
-  using Table::binary_read;
-  using Table::binary_write;
-};
-
 int main()
 {
   const std::string metaFileName = "test_table.meta";
 
   // 1. Create and populate schema
-  MyTable table;
-  table.addColumn({"id", "INT"});
-  table.addColumn({"name", "TEXT"});
-  table.addColumn({"created_at", "DATE"});
+  Table table;
+  table.addColumn({"id", stringToKindColumn("INT")});
+  table.addColumn({"name", stringToKindColumn("TEXT")});
+  table.addColumn({"created_at", stringToKindColumn("DATE")});
 
   // 2. Serialize schema to file
   {
@@ -29,7 +21,7 @@ int main()
   }
 
   // 3. Read schema back into a new instance
-  MyTable loaded;
+  Table loaded;
   {
     std::ifstream in(metaFileName, std::ios::binary);
     assert(in && "Failed to open meta file for reading");

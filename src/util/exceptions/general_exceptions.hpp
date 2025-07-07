@@ -24,3 +24,13 @@ public:
     explicit OutOfRangeException(const std::string &message)
         : std::runtime_error("Out of range: " + message) {}
 };
+
+/**
+ * @brief Exception thrown when a key is not found in an array.
+ */
+class PatternException : public std::runtime_error
+{
+public:
+    explicit PatternException(const std::string &message)
+        : std::runtime_error("Invalid command pattern: " + message) {}
+};

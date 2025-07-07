@@ -11,8 +11,6 @@
 #include "../util/table.hpp"
 #include "database_node_flb.hpp"
 
-using Record = std::vector<RecordValue>;
-
 /**
  * @class DatabaseNode
  * @brief Gestor de tablas y registros en disco usando B+Tree.
@@ -40,15 +38,12 @@ public:
    */
   bool createTable(const std::string &name,
                    const Table &schema,
-                   size_t keyColumnIndex,
                    int order = 4)
   {
     if (tables_.count(name))
       return false;
-    if (keyColumnIndex >= schema.getColumnNames().size())
-      throw std::invalid_argument("Invalid key column index");
 
-    tables_[name] = std::make_unique<TableHolder>(schema, keyColumnIndex, order);
+    tables_[name] = std::make_unique<TableHolder>(schema, schema.getKeyColumn(), order);
     
     std::ofstream metaOut(dataDir_ + name + ".meta", std::ios::binary);
     if (!metaOut)
@@ -60,16 +55,43 @@ public:
   }
 
   /**
+   * @brief Crea una nueva tabla con esquema definido sin registrar en log.
+   */
+  bool createTableSilent(const std::string &name,
+                   const Table &schema,
+                   int order = 4)
+  {
+    if (tables_.count(name))
+      return false;
+
+    tables_[name] = std::make_unique<TableHolder>(schema, schema.getKeyColumn(), order);
+    return true;
+  }
+
+  /**
    * @brief Inserta un registro en la tabla indicada.
    */
   bool insert(const std::string &name, const Record &record)
   {
     auto h = getHolder(name);
     validateRecordSize(h, record);
-    int64_t key = std::stoll(record[h->keyCol].value);
+    int64_t key = std::stoll(record.values[h->keyCol].value);
     if (!h->tree.insert(key, record))
       return false;
     flb::appendRecordToFile(dataDir_, name, record);
+    return true;
+  }
+
+  /**
+   * @brief Inserta un registro en la tabla indicada sin añadir al log de datos.
+   */
+  bool insertSilent(const std::string &name, const Record &record)
+  {
+    auto h = getHolder(name);
+    validateRecordSize(h, record);
+    int64_t key = std::stoll(record.values[h->keyCol].value);
+    if (!h->tree.insert(key, record))
+      return false;
     return true;
   }
 
@@ -133,7 +155,7 @@ private:
 
   void validateRecordSize(TableHolder *h, const Record &r) const
   {
-    if (r.size() != h->schema.getColumnNames().size())
+    if (r.values.size() > h->schema.getColumnNames().size())
       throw std::invalid_argument("Record size does not match schema");
   }
 
