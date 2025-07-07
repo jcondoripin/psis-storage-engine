@@ -1,3 +1,5 @@
+#pragma once
+
 #include <string>
 #include <iostream>
 #include <vector>
@@ -6,44 +8,65 @@
 #include <regex>
 #include "../util/exceptions/general_exceptions.hpp"
 #include "../util/column.hpp"
+#include "../util/record.hpp"
 #include "../storage/database_node.hpp"
 #include "../storage/database_node_flb.hpp"
-#include "engine.hpp"
 
 namespace parser_engine
 {
   using namespace std;
 
   const regex CREATE_PATTERN(R"(CREATE\s+(\w+)\s+(\d+)\s+(.*))");
-  const regex SEARCH_PATTERN(R"(SELECT\s+(\w+)\s+(\d+))");
+  const regex GET_PATTERN(R"(GET\s+(\w+)\s+(\d+))");
   const regex INSERT_PATTERN(R"(INSERT\s+(\w+)\s+(\w+:(?:"[^\"]*"|[^:\s]+):\w+(?:\s+\w+:(?:"[^\"]*"|[^:\s]+):\w+)*))");
   const regex UPDATE_PATTERN(R"(UPDATE\s+(\w+)\s+(\d+)\s+(\w+:(?:"[^\"]*"|[^:\s]+):\w+(?:\s+\w+:(?:"[^\"]*"|[^:\s]+):\w+)*))");
   const regex DELETE_PATTERN(R"(DELETE\s+(\w+)\s+(\d+))");
 
-  ArgsCommand _read_create(const smatch &match);
-  ArgsCommand _read_search(const smatch &match);
-  ArgsCommand _read_insert(const smatch &match);
-  ArgsCommand _read_update(const smatch &match);
-  ArgsCommand _read_delete(const smatch &match);
+  ArgsCommandCreate _read_create(const smatch &match);
+  ArgsCommandGet _read_get(const smatch &match);
+  ArgsCommandInsert _read_insert(const smatch &match);
+  ArgsCommandUpdate _read_update(const smatch &match);
+  ArgsCommandDelete _read_delete(const smatch &match);
 
-  ArgsCommand readCommand(string yytext)
+  ArgsCommandGeneral readCommand(string yytext)
   {
     smatch match;
-    if (regex_match(yytext, match, CREATE_PATTERN))
-      return _read_create(match);
-    if (regex_match(yytext, match, INSERT_PATTERN))
-      return _read_insert(match);
-    if (regex_match(yytext, match, SEARCH_PATTERN))
-      return _read_search(match);
-    if (regex_match(yytext, match, UPDATE_PATTERN))
-      return _read_update(match);
-    if (regex_match(yytext, match, DELETE_PATTERN))
-      return _read_delete(match);
+    ArgsCommandGeneral general;
 
-    throw PatternException("Comando no reconocido o mal formado.");
+    if (regex_match(yytext, match, CREATE_PATTERN))
+    {
+      auto command = _read_create(match);
+      general.create = std::make_optional(command);
+    }
+    else if (regex_match(yytext, match, INSERT_PATTERN))
+    {
+      auto command = _read_insert(match);
+      general.insert = std::make_optional(command);
+    }
+    else if (regex_match(yytext, match, GET_PATTERN))
+    {
+      auto command = _read_get(match);
+      general.get = std::make_optional(command);
+    }
+    else if (regex_match(yytext, match, UPDATE_PATTERN))
+    {
+      auto command = _read_update(match);
+      general.update = std::make_optional(command);
+    }
+    else if (regex_match(yytext, match, DELETE_PATTERN))
+    {
+      auto command = _read_delete(match);
+      general.remove = std::make_optional(command);
+    }
+    else
+    {
+      throw PatternException("Comando no reconocido o mal formado.");
+    }
+
+    return general;
   }
 
-  ArgsCommand _read_create(const smatch &match)
+  ArgsCommandCreate _read_create(const smatch &match)
   {
     string tableName = match[1];
     int keyColumn = stoi(match[2]);
@@ -67,28 +90,18 @@ namespace parser_engine
 
     t.setKeyColumn(keyColumn);
 
-    return ArgsCommand{
-        Operation::CREATE_TABLE,
-        tableName,
-        0,
-        t,
-        {}};
+    return ArgsCommandCreate{Operation::CREATE_TABLE, tableName, t};
   }
 
-  ArgsCommand _read_search(const smatch &match)
+  ArgsCommandGet _read_get(const smatch &match)
   {
     string tableName = match[1];
-    int id = stoi(match[2]);
+    int64_t id = stoi(match[2]);
 
-    return ArgsCommand{
-        Operation::SEARCH,
-        tableName,
-        id,
-        {},
-        {}};
+    return ArgsCommandGet{Operation::GET, tableName, id};
   }
 
-  ArgsCommand _read_insert(const smatch &match)
+  ArgsCommandInsert _read_insert(const smatch &match)
   {
     string tableName = match[1];
     string valuesStr = match[2];
@@ -132,18 +145,13 @@ namespace parser_engine
       r.values.push_back({col, val, kind});
     }
 
-    return ArgsCommand{
-        Operation::INSERT,
-        tableName,
-        0,
-        {},
-        r};
+    return ArgsCommandInsert{Operation::INSERT, tableName, r};
   }
 
-  ArgsCommand _read_update(const smatch &match)
+  ArgsCommandUpdate _read_update(const smatch &match)
   {
     string tableName = match[1];
-    int id = stoi(match[2]);
+    int64_t id = stoi(match[2]);
     string updateStr = match[3];
 
     Record r;
@@ -185,24 +193,14 @@ namespace parser_engine
       r.values.push_back({col, val, kind});
     }
 
-    return ArgsCommand{
-        Operation::UPDATE,
-        tableName,
-        id,
-        {},
-        r};
+    return ArgsCommandUpdate{Operation::UPDATE, tableName, id, r};
   }
 
-  ArgsCommand _read_delete(const smatch &match)
+  ArgsCommandDelete _read_delete(const smatch &match)
   {
     string tableName = match[1];
-    int id = stoi(match[2]);
+    int64_t id = stoi(match[2]);
 
-    return ArgsCommand{
-        Operation::REMOVE,
-        tableName,
-        id,
-        {},
-        {}};
+    return ArgsCommandDelete{Operation::REMOVE, tableName, id};
   }
 }

@@ -91,7 +91,7 @@ int main()
   // SEARCH product id=3
   //
   ArgsCommand selP;
-  selP.command = Operation::SEARCH;
+  selP.command = Operation::GET;
   selP.tableName = "products";
   selP.key = 3;
   engine.exec(selP); // should print Product3 and price 30.0
@@ -100,7 +100,7 @@ int main()
   // SEARCH customer cid=2
   //
   ArgsCommand selC;
-  selC.command = Operation::SEARCH;
+  selC.command = Operation::GET;
   selC.tableName = "customers";
   selC.key = 2;
   engine.exec(selC); // should print Bobson and vip=true

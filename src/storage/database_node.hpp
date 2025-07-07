@@ -1,5 +1,6 @@
 #pragma once
 
+#include <functional>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -43,8 +44,8 @@ public:
     if (tables_.count(name))
       return false;
 
-    tables_[name] = std::make_unique<TableHolder>(schema, schema.getKeyColumn(), order);
-    
+    tables_[name] = std::make_unique<TableHolder>(schema, schema.getKeyColumn(), name, order);
+
     std::ofstream metaOut(dataDir_ + name + ".meta", std::ios::binary);
     if (!metaOut)
       throw std::runtime_error("Failed to create metadata file for table: " + name);
@@ -58,13 +59,13 @@ public:
    * @brief Crea una nueva tabla con esquema definido sin registrar en log.
    */
   bool createTableSilent(const std::string &name,
-                   const Table &schema,
-                   int order = 4)
+                         const Table &schema,
+                         int order = 4)
   {
     if (tables_.count(name))
       return false;
 
-    tables_[name] = std::make_unique<TableHolder>(schema, schema.getKeyColumn(), order);
+    tables_[name] = std::make_unique<TableHolder>(schema, schema.getKeyColumn(), name, order);
     return true;
   }
 
@@ -123,7 +124,7 @@ public:
   /**
    * @brief Busca un registro por clave.
    */
-  std::optional<Record> search(const std::string &name, int64_t key) const
+  std::optional<Record> get(const std::string &name, int64_t key) const
   {
     return getHolder(name)->tree.search(key);
   }
@@ -136,10 +137,22 @@ private:
 
   struct TableHolder : BaseHolder
   {
+    std::string name;
     Table schema;
     BPlusTree<int64_t, Record> tree;
     size_t keyCol;
-    TableHolder(const Table &s, size_t k, int o) : schema(s), tree(o), keyCol(k) {}
+    TableHolder(const Table &s, size_t k, std::string n, int o) : schema(s), tree(o), name(n), keyCol(k)
+    {
+      tree.events.subscribe(
+          [this](const BPlusTreeEvent<int64_t, Record> &evt)
+          {
+            std::cout
+                << "[Tree event - " << name << "] " << to_string_bplustree_event(evt.type)
+                << " | key=" << (evt.key ? std::to_string(*evt.key) : "-")
+                << " | msg=" << evt.message
+                << std::endl;
+          });
+    }
   };
 
   TableHolder *getHolder(const std::string &name) const

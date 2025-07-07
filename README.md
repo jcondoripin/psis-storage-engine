@@ -8,7 +8,7 @@
 - Almacenamiento persistente en archivos `.tbl` y `.meta`  
 - Separación de lógica en módulos: `core`, `index`, `network`, `storage`, `util`  
 - CLI para ejecutar comandos directamente desde consola  
-- Ejecución de comandos `CREATE`, `INSERT`, `SELECT`, `UPDATE` y `DELETE`
+- Ejecución de comandos `CREATE`, `INSERT`, `GET`, `UPDATE` y `DELETE`
 - Soporte para logs (`.log`) y backups automáticos  
 - Arquitectura extensible y portable  
 
@@ -120,7 +120,7 @@ Dentro de la CLI puedes ejecutar instrucciones SQL-like, por ejemplo:
 ```sql
 CREATE alumnos 0 id:INT nombre:TEXT;
 INSERT alumnos id:1:INT nombre:'Juan':TEXT;
-SELECT alumnos 1;
+GET alumnos 1;
 DELETE alumnos 1;
 ```
 

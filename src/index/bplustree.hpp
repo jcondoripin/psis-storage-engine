@@ -32,7 +32,7 @@ public:
    */
   bool insert(const Key &key, const Value &value)
   {
-    emitEvent(BPlusTreeEventType::INSERT_STARTED, key, value, "Inicio de inserción");
+    emitEvent(BPlusTreeEventType::INSERT_STARTED, key, value, "Inicio de insercion");
 
     if (!root)
     {
@@ -56,7 +56,7 @@ public:
         auto newRootNode = std::make_shared<BPlusTreeInternalNode<Key, Value>>();
         newRootNode->insertChild(firstNode, secondNode, promotedKey);
         this->root = newRootNode;
-        emitEvent(BPlusTreeEventType::ROOT_REPLACED, std::nullopt, std::nullopt, "Nueva raíz tras split");
+        emitEvent(BPlusTreeEventType::ROOT_REPLACED, std::nullopt, std::nullopt, "Nueva raiz tras split");
       }
 
       emitEvent(BPlusTreeEventType::INSERT_COMPLETED, key, value, "Clave insertada correctamente");
@@ -89,6 +89,8 @@ public:
         auto internalNode = std::dynamic_pointer_cast<BPlusTreeInternalNode<Key, Value>>(currentNode);
         currentNode = internalNode->getChildForKey(key);
       }
+      if (!currentNode || currentNode->keys.empty())
+        throw KeyNotFoundException();
       auto value = currentNode->getValueByKey(key);
 
       emitEvent(BPlusTreeEventType::SEARCH_HIT, key, value, "Search hit");
@@ -455,7 +457,7 @@ private:
               {
                 this->root = childInternal;
 
-                emitEvent(BPlusTreeEventType::ROOT_REPLACED, std::nullopt, std::nullopt, "Reemplazo de raíz tras merge");
+                emitEvent(BPlusTreeEventType::ROOT_REPLACED, std::nullopt, std::nullopt, "Reemplazo de raiz tras merge");
 
                 return false;
               }

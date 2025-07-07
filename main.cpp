@@ -41,7 +41,7 @@ int main(int argc, char *argv[])
 
   if (!dbs.start())
   {
-    std::cerr << "❌ No se pudo iniciar el servidor.\n";
+    std::cerr << "No se pudo iniciar el servidor.\n";
     return 1;
   }
   std::string input;

@@ -9,13 +9,6 @@
 #include "./exceptions/database_exceptions.hpp"
 #include "column.hpp"
 
-struct RecordValue
-{
-  std::string column;
-  std::string value;
-  std::string kind;
-};
-
 class Table
 {
 private:

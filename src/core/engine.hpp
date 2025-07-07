@@ -2,24 +2,61 @@
 
 #include <string>
 #include <vector>
+#include <filesystem>
+#include <memory>
 #include <fstream>
 #include <iostream>
-#include <sstream>
-#include <unordered_map>
 #include "../util/operation.hpp"
 #include "../util/table.hpp"
+#include "../util/commands.hpp"
 #include "../storage/database_node.hpp"
-#include "../storage/database_node_flb.hpp"
 #include "../util/lib.hpp"
 
-struct ArgsCommand
+#include "engine_cmd.hpp"
+#include "./engine/create_table_cmd.hpp"
+#include "./engine/insert_cmd.hpp"
+#include "./engine/update_cmd.hpp"
+#include "./engine/delete_cmd.hpp"
+#include "./engine/get_cmd.hpp"
+#include "./engine/select_cmd.hpp"
+
+inline std::unique_ptr<EngineCommand> makeCommand(const ArgsCommandGeneral &args)
 {
-  Operation command;
-  std::string tableName;
-  int64_t key = 0;
-  Table schema = {};
-  Record record = {};
-};
+  if (args.create.has_value())
+  {
+    return std::make_unique<CreateTableCmd>(
+        static_cast<const ArgsCommandCreate &>(args.create.value()));
+  }
+  else if (args.select.has_value())
+  {
+    return std::make_unique<SelectCmd>(
+        static_cast<const ArgsCommandSelect &>(args.select.value()));
+  }
+  else if (args.get.has_value())
+  {
+    return std::make_unique<GetCmd>(
+        static_cast<const ArgsCommandGet &>(args.get.value()));
+  }
+  else if (args.insert.has_value())
+  {
+    return std::make_unique<InsertCmd>(
+        static_cast<const ArgsCommandInsert &>(args.insert.value()));
+  }
+  else if (args.update.has_value())
+  {
+    return std::make_unique<UpdateCmd>(
+        static_cast<const ArgsCommandUpdate &>(args.update.value()));
+  }
+  else if (args.remove.has_value())
+  {
+    return std::make_unique<DeleteCmd>(
+        static_cast<const ArgsCommandDelete &>(args.remove.value()));
+  }
+  else
+  {
+    return nullptr;
+  }
+}
 
 class Engine
 {
@@ -61,122 +98,29 @@ public:
     }
   }
 
-  void exec(ArgsCommand args)
+  CommandResult exec(const ArgsCommandGeneral &args)
   {
-    auto [command, tableName, key, schema, record] = args;
+    auto cmd = makeCommand(args);
+    if (!cmd)
+    {
+      std::cerr << "Comando desconocido\n";
+      return CommandResult::Failure;
+    }
 
-    std::istringstream ss(operationToString(command));
+    auto result = cmd->execute(db_);
 
-    if (command == Operation::CREATE_TABLE)
+    if (result == CommandResult::Success)
     {
-      bool ok = db_.createTable(tableName, schema);
-      if (ok)
-      {
-        logCreateTable(command, tableName, schema);
-        std::cout << "✅ Tabla creada: " << tableName << "\n";
-      }
-      else
-        std::cerr << "⚠️ Ya existe la tabla " << tableName << "\n";
+      std::string dir = dataDir_ + "logs/";
+      std::filesystem::create_directories(dir);
+      std::ofstream ofs(dir + get_date() + ".log", std::ios::app);
+      cmd->log(ofs);
     }
-    else if (command == Operation::INSERT)
-    {
-      if (db_.insert(tableName, record))
-      {
-        std::cout << "✅ Insertado en " << tableName << "\n";
-        logMutation(command, tableName, record);
-      }
-      else
-        std::cerr << "❌ Clave duplicada al insertar\n";
-    }
-    else if (command == Operation::SEARCH)
-    {
-      auto res = db_.search(tableName, key);
-      if (res)
-      {
-        for (const auto &v : (*res).values)
-          std::cout << v.column << "=" << v.value << " ";
-        std::cout << "\n";
-      }
-      else
-        std::cerr << "❌ Registro no encontrado\n";
-    }
-    else if (command == Operation::UPDATE)
-    {
-      if (db_.update(tableName, key, record))
-      {
-        std::cout << "✅ Actualizado: " << key << "\n";
-        logMutation(command, tableName, record);
-      }
-      else
-        std::cerr << "❌ No se encontró la clave\n";
-    }
-    else if (command == Operation::REMOVE)
-    {
-      if (db_.remove(tableName, key))
-      {
-        std::cout << "✅ Eliminado: " << key << "\n";
-        Record r;
-        r.values.push_back({"id", std::to_string(key), "INT"});
-        logMutation(command, tableName, r);
-      }
-      else
-        std::cerr << "❌ No existe clave para eliminar\n";
-    }
-    else if (command == Operation::BACKUP)
-    {
-      loadBackup();
-      std::cout << "🗂️ Backup guardado en backup.log\n";
-    }
-    else
-    {
-      std::cerr << "❌ Comando desconocido: " << operationToString(command) << "\n";
-    }
+
+    return result;
   }
 
 private:
   std::string dataDir_;
   DatabaseNode db_;
-
-  void logCreateTable(const Operation &op, const std::string &table, const Table &schema)
-  {
-    std::string logDir = dataDir_ + "logs/";
-    std::filesystem::create_directories(logDir);
-    std::string logFile = logDir + get_date() + ".log";
-
-    std::ofstream log(logFile, std::ios::app);
-    if (!log)
-      throw std::runtime_error("No se pudo abrir el archivo de log: " + logFile);
-
-    log << operationToString(op) << " " << table;
-    for (const auto &[name, kind] : schema.getColumns())
-      log << ", " << name << ":" << kindColumnToString(kind);
-    log << "\n";
-  }
-
-  void logMutation(const Operation &op, const std::string &table, const Record &r)
-  {
-    std::string logDir = dataDir_ + "logs/";
-    std::filesystem::create_directories(logDir);
-    std::string logFile = logDir + get_date() + ".log";
-
-    std::ofstream log(logFile, std::ios::app);
-    if (!log)
-      throw std::runtime_error("No se pudo abrir el archivo de log: " + logFile);
-
-    log << operationToString(op) << " " << table;
-    for (const auto &rv : r.values)
-      log << ", " << rv.column << ":" << rv.value << ":" << rv.kind;
-    log << "\n";
-  }
-
-  void loadBackup()
-  {
-    for (const auto &entry : std::filesystem::directory_iterator(dataDir_))
-    {
-      if (entry.path().extension() == ".tbl" || entry.path().extension() == ".meta")
-      {
-        std::cout << "Requires backup process" << std::endl;
-      }
-    }
-  }
 };

@@ -14,14 +14,14 @@ int main()
 
   // --- SEARCH EXISTING ---
   ArgsCommand selProd;
-  selProd.command = Operation::SEARCH;
+  selProd.command = Operation::GET;
   selProd.tableName = "products";
   selProd.key = 3;
   std::cout << "Searching products id=3: ";
   engine.exec(selProd);
 
   ArgsCommand selCust;
-  selCust.command = Operation::SEARCH;
+  selCust.command = Operation::GET;
   selCust.tableName = "customers";
   selCust.key = 2;
   std::cout << "Searching customers cid=2: ";

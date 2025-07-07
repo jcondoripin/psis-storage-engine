@@ -35,16 +35,12 @@ private:
     try
     {
       auto args = parser_engine::readCommand(msg);
-      std::ostringstream result;
-      
-      auto oldCoutBuf = std::cout.rdbuf(result.rdbuf());
-      engine_.exec(args);
-      std::cout.rdbuf(oldCoutBuf);
-      return result.str();
+      auto result = engine_.exec(args);
+      return commandResultToString(result);
     }
     catch (const std::exception &ex)
     {
-      return std::string("❌ Error: ") + ex.what();
+      return std::string("Error: ") + ex.what();
     }
   }
 };
