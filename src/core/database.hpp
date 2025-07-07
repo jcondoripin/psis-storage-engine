@@ -9,9 +9,8 @@ class DatabaseServer
 public:
   DatabaseServer(const std::string &dir,
            const std::string &port = "65535",
-           size_t bufSize = 1024,
-           int backlog = SOMAXCONN)
-      : engine_(dir), server_(port, bufSize, backlog)
+           const std::string &host = "127.0.0.1")
+      : engine_(dir), server_(port, host, 1024, SOMAXCONN)
   {
     server_.setHandler([this](const std::string &msg)
                        { return handleCommand(msg); });

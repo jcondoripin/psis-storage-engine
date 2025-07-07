@@ -1,4 +1,4 @@
-#include "../src/core/database.hpp"
+#include "src/core/database.hpp"
 #include <iostream>
 #include <csignal>
 #include <cstdlib>

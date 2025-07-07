@@ -19,7 +19,7 @@ using socklen_t = int;
 #include <arpa/inet.h>
 #include <unistd.h>
 #define INVALID_SOCKET (-1)
-#define SOCKET_ERROR   (-1)
+#define SOCKET_ERROR (-1)
 using SOCKET = int;
 #endif
 
@@ -29,9 +29,10 @@ public:
   using Handler = std::function<std::string(const std::string &)>;
 
   Server(const std::string &port,
+         const std::string &host,
          size_t bufferSize,
          int backlog = SOMAXCONN)
-      : port_(port), bufferSize_(bufferSize), backlog_(backlog), listenSock_(INVALID_SOCKET), running_(false) {}
+      : port_(port), host_(host), bufferSize_(bufferSize), backlog_(backlog), listenSock_(INVALID_SOCKET), running_(false) {}
 
   ~Server()
   {
@@ -54,26 +55,34 @@ public:
     hints.ai_family = AF_INET;
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags = AI_PASSIVE;
-    if (getaddrinfo(nullptr, port_.c_str(), &hints, &result) != 0)
+
+    const char *node = host_.empty() ? nullptr : host_.c_str();
+
+    if (getaddrinfo(node, port_.c_str(), &hints, &result) != 0)
       return false;
+
     listenSock_ = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
     if (listenSock_ == INVALID_SOCKET)
     {
       freeaddrinfo(result);
       return false;
     }
+
     if (bind(listenSock_, result->ai_addr, (int)result->ai_addrlen) == SOCKET_ERROR)
     {
       freeaddrinfo(result);
       closeSocket(listenSock_);
       return false;
     }
+
     freeaddrinfo(result);
+
     if (listen(listenSock_, backlog_) == SOCKET_ERROR)
     {
       closeSocket(listenSock_);
       return false;
     }
+
     running_ = true;
     acceptThread_ = std::thread([this]
                                 { acceptLoop(); });
@@ -141,6 +150,7 @@ private:
   }
 
   std::string port_;
+  std::string host_;
   size_t bufferSize_;
   int backlog_;
   SOCKET listenSock_;
