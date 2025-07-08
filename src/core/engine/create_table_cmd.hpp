@@ -10,7 +10,7 @@ public:
   explicit CreateTableCmd(const ArgsCommandCreate &args)
       : args_(args) {}
 
-  CommandResult execute(DatabaseNode &db) const override
+  CommandResult execute(DatabaseNode &db, std::shared_ptr<EventKeyHandler<std::string, CommandResult>> events) const override
   {
     if (db.createTable(args_.tableName, args_.schema))
     {

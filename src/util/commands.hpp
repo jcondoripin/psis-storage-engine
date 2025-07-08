@@ -40,6 +40,11 @@ struct ArgsCommandDelete : ArgsCommand
   int64_t key;
 };
 
+struct ArgsCommandSub : ArgsCommand
+{
+  SOCKET client = 0;
+};
+
 struct ArgsCommandGeneral
 {
   std::optional<ArgsCommandCreate> create = std::nullopt;
@@ -48,4 +53,5 @@ struct ArgsCommandGeneral
   std::optional<ArgsCommandInsert> insert = std::nullopt;
   std::optional<ArgsCommandUpdate> update = std::nullopt;
   std::optional<ArgsCommandDelete> remove = std::nullopt;
+  std::optional<ArgsCommandSub> sub = std::nullopt;
 };

@@ -26,7 +26,7 @@ using SOCKET = int;
 class Server
 {
 public:
-  using Handler = std::function<std::string(const std::string &)>;
+  using Handler = std::function<std::string(const std::string &request, SOCKET client)>;
 
   Server(const std::string &port,
          const std::string &host,
@@ -102,6 +102,20 @@ public:
 #endif
   }
 
+  /**
+   * @brief Envía un mensaje a un cliente específico.
+   * @param clientId El identificador del cliente (su socket).
+   * @param msg      La cadena a enviar (debe incluir el delimitador apropiado, p.ej. '\n').
+   * @return true si el send fue exitoso, false en caso contrario.
+   */
+  bool sendToClient(SOCKET clientId, const std::string &msg)
+  {
+    if (clientId == INVALID_SOCKET)
+      return false;
+    int sent = send(clientId, msg.c_str(), (int)msg.size(), 0);
+    return (sent == (int)msg.size());
+  }
+
 private:
   void acceptLoop()
   {
@@ -129,7 +143,7 @@ private:
       {
         buf[recvd] = '\0';
         std::string req(buf.data());
-        std::string resp = handler_ ? handler_(req) : std::string();
+        std::string resp = handler_ ? handler_(req, client) : std::string();
         send(client, resp.c_str(), (int)resp.size(), 0);
       }
       else

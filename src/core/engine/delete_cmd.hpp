@@ -10,12 +10,14 @@ public:
   explicit DeleteCmd(const ArgsCommandDelete &args)
       : args_(args) {}
 
-  CommandResult execute(DatabaseNode &db) const override
+  CommandResult execute(DatabaseNode &db, std::shared_ptr<EventKeyHandler<std::string, CommandResult>> events) const override
   {
     if (db.remove(args_.tableName, args_.key))
     {
       std::cout << "Eliminado: " << args_.key << "\n";
-      return CommandResult::Ok("Eliminado: " + std::to_string(args_.key));
+      auto result = CommandResult::Ok("Eliminado: " + std::to_string(args_.key));
+      events->emit(args_.tableName, result);
+      return result;
     }
     std::cerr << "No existe clave para eliminar\n";
     return CommandResult::Fail("No existe clave para eliminar");
