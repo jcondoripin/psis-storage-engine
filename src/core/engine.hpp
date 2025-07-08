@@ -21,6 +21,7 @@
 #include "./engine/sub_cmd.hpp"
 #include "./engine/get_cmd.hpp"
 #include "./engine/select_cmd.hpp"
+#include "./engine/query_cmd.hpp"
 
 /**
  * @brief Fábrica de comandos del motor.
@@ -66,6 +67,11 @@ inline std::unique_ptr<EngineCommand> makeCommand(const ArgsCommandGeneral &args
     return std::make_unique<SubCmd>(
         static_cast<const ArgsCommandSub &>(args.sub.value()), listenner);
   }
+  else if (args.query.has_value())
+  {
+  return std::make_unique<QueryCommand>(static_cast<const ArgsQuery &>(args.query.value()));
+  }
+
   else
   {
     return nullptr;

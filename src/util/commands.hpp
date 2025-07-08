@@ -2,6 +2,8 @@
 
 #include "operation.hpp"
 #include "record.hpp"
+#include "query_args.hpp"
+
 
 struct ArgsCommand
 {
@@ -54,4 +56,6 @@ struct ArgsCommandGeneral
   std::optional<ArgsCommandUpdate> update = std::nullopt;
   std::optional<ArgsCommandDelete> remove = std::nullopt;
   std::optional<ArgsCommandSub> sub = std::nullopt;
+  std::optional<ArgsQuery> query;
+
 };

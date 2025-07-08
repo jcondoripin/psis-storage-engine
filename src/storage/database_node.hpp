@@ -11,6 +11,7 @@
 #include "../util/exceptions/database_exceptions.hpp"
 #include "../util/table.hpp"
 #include "database_node_flb.hpp"
+#include "../util/record.hpp"
 
 /**
  * @class DatabaseNode
@@ -22,6 +23,8 @@
 class DatabaseNode
 {
 public:
+  
+
   /**
    * @brief Constructor que define el directorio de almacenamiento.
    * @param dataDir Ruta base para archivos de tablas.
@@ -122,6 +125,60 @@ public:
   }
 
   /**
+   * @brief Realiza una búsqueda con filtros por columna.
+   * Solo funciona para columnas no-clave, recorre los nodos hoja.
+   */
+  std::vector<Record> searchFilter(const std::string &table, const Record &filter)
+  {
+    const auto &allRecords = getAllRecords(table);
+    std::vector<Record> results;
+
+    for (const auto &rec : allRecords)
+    {
+      bool match = true;
+
+      for (const auto &cond : filter.values)
+      {
+        if (cond.column.empty())
+        {
+          // Buscar en cualquier columna
+          bool found = false;
+          for (const auto &field : rec.values)
+          {
+            if (field.kind == cond.kind && field.value == cond.value)
+            {
+              found = true;
+              break;
+            }
+          }
+          if (!found)
+          {
+            match = false;
+            break;
+          }
+        }
+        else
+        {
+          // Buscar en una columna específica
+          auto it = std::find_if(rec.values.begin(), rec.values.end(), [&](const RecordValue &v)
+                                 { return v.column == cond.column && v.value == cond.value && v.kind == cond.kind; });
+
+          if (it == rec.values.end())
+          {
+            match = false;
+            break;
+          }
+        }
+      }
+
+      if (match)
+        results.push_back(rec);
+    }
+
+    return results;
+  }
+
+  /**
    * @brief Busca un registro por clave.
    */
   std::optional<Record> get(const std::string &name, int64_t key) const
@@ -130,6 +187,27 @@ public:
   }
 
 private:
+  /**
+   * @brief Devuelve todos los registros de una tabla recorriendo los nodos hoja.
+   */
+  /**
+ * @brief Devuelve todos los registros almacenados en una tabla.
+ */
+std::vector<Record> getAllRecords(const std::string& tableName) const {
+  std::vector<Record> all;
+
+  auto holder = getHolder(tableName);
+
+  // Recorremos todos los registros usando el recorrido completo
+  for (const auto& record : holder->tree.traverse()) {
+    all.push_back(record); // ✅ Ya es un Record
+}
+
+
+  return all;
+}
+
+
   struct BaseHolder
   {
     virtual ~BaseHolder() = default;
