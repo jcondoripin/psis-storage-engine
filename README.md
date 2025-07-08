@@ -7,7 +7,6 @@
 - Estructura de índices basada en **B+Trees**  
 - Almacenamiento persistente en archivos `.tbl` y `.meta`  
 - Separación de lógica en módulos: `core`, `index`, `network`, `storage`, `util`  
-- CLI para ejecutar comandos directamente desde consola  
 - Ejecución de comandos `CREATE`, `INSERT`, `GET`, `UPDATE` y `DELETE`
 - Soporte para logs (`.log`) y backups automáticos  
 - Arquitectura extensible y portable  
@@ -18,8 +17,7 @@
 
 ```plaintext
 .
-├── main.cpp                  # Ejecutable principal del servidor
-├── cli/cli.cpp              # Ejecutable para la interfaz de línea de comandos
+├── main.cpp                 # Ejecutable principal del servidor
 ├── src/
 │   ├── core/                # Motor de ejecución e interpretación de comandos
 │   ├── index/               # Implementación de B+Tree
@@ -52,12 +50,6 @@
 g++ main.cpp -std=c++17 -o psisdb_server
 ```
 
-#### 🔧 Compilar el CLI (`cli/cli.cpp`)
-
-```bash
-g++ cli/cli.cpp -std=c++17 -o psisdb_cli
-```
-
 > Para facilitar la compilación, puedes añadir un `Makefile` con los siguientes objetivos:
 >
 > ```makefile
@@ -65,9 +57,6 @@ g++ cli/cli.cpp -std=c++17 -o psisdb_cli
 >
 > server:
 > 	g++ main.cpp -std=c++17 -o psisdb_server
->
-> cli:
-> 	g++ cli/cli.cpp -std=c++17 -o psisdb_cli
 >
 > clean:
 > 	rm -f psisdb_server psisdb_cli
@@ -91,12 +80,6 @@ g++ cli/cli.cpp -std=c++17 -o psisdb_cli
    g++ main.cpp -std=c++17 -lws2_32 -o server.exe
    ```
 
-4. Compila el CLI:
-
-   ```bash
-   g++ cli/cli.cpp -std=c++17 -lws2_32 -o cli.exe
-   ```
-
 ---
 
 ## ▶️ Ejecución
@@ -107,23 +90,6 @@ g++ cli/cli.cpp -std=c++17 -o psisdb_cli
 ./psisdb_server       # Linux
 server.exe            # Windows
 ```
-
-### Cliente (CLI)
-
-```bash
-./psisdb_cli         # Linux
-cli.exe              # Windows
-```
-
-Dentro de la CLI puedes ejecutar instrucciones SQL-like, por ejemplo:
-
-```sql
-CREATE alumnos 0 id:INT nombre:TEXT;
-INSERT alumnos id:1:INT nombre:'Juan':TEXT;
-GET alumnos 1;
-DELETE alumnos 1;
-```
-
 ---
 
 ## 🧪 Pruebas
