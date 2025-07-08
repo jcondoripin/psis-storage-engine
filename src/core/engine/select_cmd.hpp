@@ -13,7 +13,7 @@ public:
   CommandResult execute(DatabaseNode &db) const override
   {
     std::cerr << "Funcion no implementada: " << args_.tableName << "\n";
-    return CommandResult::Failure;
+    return CommandResult::Fail("Funcion no implementada");
   }
 
   void log(std::ostream & /*os*/) const override

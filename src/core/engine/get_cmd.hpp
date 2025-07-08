@@ -18,10 +18,10 @@ public:
       for (const auto &v : (*opt).values)
         std::cout << v.column << "=" << v.value << " ";
       std::cout << "\n";
-      return CommandResult::Success;
+      return CommandResult::WithData({opt.value()}, "Registro encontrado");
     }
     std::cerr << "Registro no encontrado: " << args_.key << "\n";
-    return CommandResult::Failure;
+    return CommandResult::Fail("Registro no encontrado: " + std::to_string(args_.key));
   }
 
   void log(std::ostream & /*os*/) const override

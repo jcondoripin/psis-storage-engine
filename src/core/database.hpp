@@ -36,7 +36,7 @@ private:
     {
       auto args = parser_engine::readCommand(msg);
       auto result = engine_.exec(args);
-      return commandResultToString(result);
+      return result.toJson();
     }
     catch (const std::exception &ex)
     {

@@ -15,10 +15,10 @@ public:
     if (db.insert(args_.tableName, args_.record))
     {
       std::cout << "Insertado en " << args_.tableName << "\n";
-      return CommandResult::Success;
+      return CommandResult::Ok("Insertado en " + args_.tableName);
     }
     std::cerr << "Clave duplicada al insertar\n";
-    return CommandResult::Failure;
+    return CommandResult::Fail("Clave duplicada al insertar");
   }
 
   void log(std::ostream &os) const override

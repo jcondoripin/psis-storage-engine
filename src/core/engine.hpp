@@ -104,12 +104,12 @@ public:
     if (!cmd)
     {
       std::cerr << "Comando desconocido\n";
-      return CommandResult::Failure;
+      return CommandResult::Fail("Comando desconocido");
     }
 
     auto result = cmd->execute(db_);
 
-    if (result == CommandResult::Success)
+    if (result.success)
     {
       std::string dir = dataDir_ + "logs/";
       std::filesystem::create_directories(dir);

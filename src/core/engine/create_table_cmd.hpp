@@ -15,10 +15,10 @@ public:
     if (db.createTable(args_.tableName, args_.schema))
     {
       std::cout << "Tabla creada: " << args_.tableName << "\n";
-      return CommandResult::Success;
+      return CommandResult::Ok("Tabla creada: " + args_.tableName);
     }
     std::cerr << "Ya existe la tabla " << args_.tableName << "\n";
-    return CommandResult::Failure;
+    return CommandResult::Fail("Ya existe la tabla " + args_.tableName);
   }
 
   void log(std::ostream &os) const override {

@@ -15,10 +15,10 @@ public:
     if (db.update(args_.tableName, args_.key, args_.record))
     {
       std::cout << "Actualizado: " << args_.key << "\n";
-      return CommandResult::Success;
+      return CommandResult::Ok("Actualizado: " + std::to_string(args_.key));
     }
-    std::cerr << "No se encontró la clave\n";
-    return CommandResult::Failure;
+    std::cerr << "No se encontro la clave\n";
+    return CommandResult::Fail("No se encontro la clave");
   }
 
   void log(std::ostream &os) const override

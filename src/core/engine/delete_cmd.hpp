@@ -15,10 +15,10 @@ public:
     if (db.remove(args_.tableName, args_.key))
     {
       std::cout << "Eliminado: " << args_.key << "\n";
-      return CommandResult::Success;
+      return CommandResult::Ok("Eliminado: " + std::to_string(args_.key));
     }
     std::cerr << "No existe clave para eliminar\n";
-    return CommandResult::Failure;
+    return CommandResult::Fail("No existe clave para eliminar");
   }
 
   void log(std::ostream &os) const override
