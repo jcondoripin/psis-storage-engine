@@ -10,12 +10,13 @@ public:
   explicit InsertCmd(const ArgsCommandInsert &args)
       : args_(args) {}
 
-  CommandResult execute(DatabaseNode &db) const override
+  CommandResult execute(DatabaseNode &db, std::shared_ptr<EventKeyHandler<std::string, CommandResult>> events) const override
   {
     if (db.insert(args_.tableName, args_.record))
     {
-      std::cout << "Insertado en " << args_.tableName << "\n";
-      return CommandResult::WithData({args_.record}, "Insertado en " + args_.tableName);
+      auto result = CommandResult::WithData({args_.record}, "Insertado en " + args_.tableName);
+      events->emit(args_.tableName, result);
+      return result;
     }
     std::cerr << "Clave duplicada al insertar\n";
     return CommandResult::Fail("Clave duplicada al insertar");

@@ -10,12 +10,14 @@ public:
   explicit UpdateCmd(const ArgsCommandUpdate &args)
       : args_(args) {}
 
-  CommandResult execute(DatabaseNode &db) const override
+  CommandResult execute(DatabaseNode &db, std::shared_ptr<EventKeyHandler<std::string, CommandResult>> events) const override
   {
     if (db.update(args_.tableName, args_.key, args_.record))
     {
       std::cout << "Actualizado: " << args_.key << "\n";
-      return CommandResult::WithData({args_.record}, "Actualizado: " + std::to_string(args_.key));
+      auto result = CommandResult::WithData({args_.record}, "Actualizado: " + std::to_string(args_.key));
+      events->emit(args_.tableName, result);
+      return result;
     }
     std::cerr << "No se encontro la clave\n";
     return CommandResult::Fail("No se encontro la clave");

@@ -10,7 +10,7 @@ public:
   explicit GetCmd(const ArgsCommandGet &args)
       : args_(args) {}
 
-  CommandResult execute(DatabaseNode &db) const override
+  CommandResult execute(DatabaseNode &db, std::shared_ptr<EventKeyHandler<std::string, CommandResult>> events) const override
   {
     auto opt = db.get(args_.tableName, args_.key);
     if (opt)

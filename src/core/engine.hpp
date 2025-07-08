@@ -11,16 +11,25 @@
 #include "../util/commands.hpp"
 #include "../storage/database_node.hpp"
 #include "../util/lib.hpp"
+#include "../events/event.hpp"
 
 #include "engine_cmd.hpp"
 #include "./engine/create_table_cmd.hpp"
 #include "./engine/insert_cmd.hpp"
 #include "./engine/update_cmd.hpp"
 #include "./engine/delete_cmd.hpp"
+#include "./engine/sub_cmd.hpp"
 #include "./engine/get_cmd.hpp"
 #include "./engine/select_cmd.hpp"
 
-inline std::unique_ptr<EngineCommand> makeCommand(const ArgsCommandGeneral &args)
+/**
+ * @brief Fábrica de comandos del motor.
+ * Crea una instancia del comando correspondiente en base al tipo de operación encapsulado en ArgsCommandGeneral.
+ *
+ * @param args Estructura que puede contener un único tipo de comando (CREATE, SELECT, GET, etc.).
+ * @return std::unique_ptr<EngineCommand> Instancia polimórfica del comando correspondiente o nullptr si no hay comando válido.
+ */
+inline std::unique_ptr<EngineCommand> makeCommand(const ArgsCommandGeneral &args, std::function<void(const std::string, SOCKET)> listenner)
 {
   if (args.create.has_value())
   {
@@ -52,18 +61,41 @@ inline std::unique_ptr<EngineCommand> makeCommand(const ArgsCommandGeneral &args
     return std::make_unique<DeleteCmd>(
         static_cast<const ArgsCommandDelete &>(args.remove.value()));
   }
+  else if (args.sub.has_value())
+  {
+    return std::make_unique<SubCmd>(
+        static_cast<const ArgsCommandSub &>(args.sub.value()), listenner);
+  }
   else
   {
     return nullptr;
   }
 }
 
-class Engine
+/**
+ * @brief Motor principal de la base de datos.
+ *
+ * Encargado de:
+ *  - Cargar el esquema (`.meta`) y los datos (`.tbl`) desde disco.
+ *  - Ejecutar comandos recibidos y delegarlos a su implementación correspondiente.
+ *  - Registrar logs de operaciones exitosas.
+ */
+class EngineNode
 {
 public:
-  explicit Engine(const std::string &dir)
+  /**
+   * @brief Constructor que inicializa el motor cargando todas las tablas desde el directorio especificado.
+   *
+   * @param dir Directorio raíz donde se almacenan los archivos `.meta` y `.tbl`.
+   *
+   * Este constructor escanea el directorio, reconstruye las tablas silenciosamente (`createTableSilent`)
+   * y carga sus datos (`insertSilent`). Las tablas inválidas o sin datos se omiten.
+   */
+  explicit EngineNode(const std::string &dir)
       : dataDir_(dir), db_(dir)
   {
+    this->events_subs_ = std::make_shared<EventKeyHandler<std::string, CommandResult>>();
+
     for (auto &entry : std::filesystem::directory_iterator(dataDir_))
     {
       if (!entry.is_regular_file())
@@ -98,16 +130,27 @@ public:
     }
   }
 
-  CommandResult exec(const ArgsCommandGeneral &args)
+  /**
+   * @brief Ejecuta un comando general (CREATE, GET, INSERT, etc.) sobre la base de datos.
+   *
+   * @param args Argumento polimórfico que encapsula un único tipo de comando.
+   * @return CommandResult Resultado con estado de éxito, mensaje y datos opcionales.
+   *
+   * Este método:
+   *  - Instancia el comando correspondiente (vía `makeCommand`).
+   *  - Lo ejecuta sobre `DatabaseNode`.
+   *  - Si fue exitoso, registra el log del comando.
+   */
+  CommandResult exec(const ArgsCommandGeneral &args, std::function<void(const std::string, SOCKET)> send_client)
   {
-    auto cmd = makeCommand(args);
+    auto cmd = makeCommand(args, send_client);
     if (!cmd)
     {
       std::cerr << "Comando desconocido\n";
       return CommandResult::Fail("Comando desconocido");
     }
 
-    auto result = cmd->execute(db_);
+    auto result = cmd->execute(db_, events_subs_);
 
     if (result.success)
     {
@@ -123,4 +166,5 @@ public:
 private:
   std::string dataDir_;
   DatabaseNode db_;
+  std::shared_ptr<EventKeyHandler<std::string, CommandResult>> events_subs_;
 };

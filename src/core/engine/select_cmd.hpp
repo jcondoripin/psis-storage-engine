@@ -10,7 +10,7 @@ public:
   explicit SelectCmd(const ArgsCommandSelect &args)
       : args_(args) {}
 
-  CommandResult execute(DatabaseNode &db) const override
+  CommandResult execute(DatabaseNode &db, std::shared_ptr<EventKeyHandler<std::string, CommandResult>> events) const override
   {
     std::cerr << "Funcion no implementada: " << args_.tableName << "\n";
     return CommandResult::Fail("Funcion no implementada");

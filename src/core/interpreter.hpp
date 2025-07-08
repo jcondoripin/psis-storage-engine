@@ -12,23 +12,48 @@
 #include "../storage/database_node.hpp"
 #include "../storage/database_node_flb.hpp"
 
+/**
+ * @brief Espacio de nombres encargado de interpretar y parsear los comandos tipo texto.
+ *
+ * Este parser convierte líneas de texto en estructuras `ArgsCommand*` que el motor ejecutará.
+ */
 namespace parser_engine
 {
   using namespace std;
 
+  /// Expresión regular para comando CREATE <tabla> <columna_clave> <esquema>
   const regex CREATE_PATTERN(R"(CREATE\s+(\w+)\s+(\d+)\s+(.*))");
+
+  /// Expresión regular para comando GET <tabla> <clave>
   const regex GET_PATTERN(R"(GET\s+(\w+)\s+(\d+))");
+
+  /// Expresión regular para comando INSERT <tabla> <columna:valor:tipo ...>
   const regex INSERT_PATTERN(R"(INSERT\s+(\w+)\s+(\w+:(?:"[^\"]*"|[^:\s]+):\w+(?:\s+\w+:(?:"[^\"]*"|[^:\s]+):\w+)*))");
+
+  /// Expresión regular para comando UPDATE <tabla> <clave> <columna:valor:tipo ...>
   const regex UPDATE_PATTERN(R"(UPDATE\s+(\w+)\s+(\d+)\s+(\w+:(?:"[^\"]*"|[^:\s]+):\w+(?:\s+\w+:(?:"[^\"]*"|[^:\s]+):\w+)*))");
+
+  /// Expresión regular para comando DELETE <tabla> <clave>
   const regex DELETE_PATTERN(R"(DELETE\s+(\w+)\s+(\d+))");
+
+  /// Expresión regular para comando SUB <tabla>
+  const regex SUB_PATTERN(R"(SUB\s+(\w+))");
 
   ArgsCommandCreate _read_create(const smatch &match);
   ArgsCommandGet _read_get(const smatch &match);
   ArgsCommandInsert _read_insert(const smatch &match);
   ArgsCommandUpdate _read_update(const smatch &match);
   ArgsCommandDelete _read_delete(const smatch &match);
+  ArgsCommandSub _read_sub(const smatch &match);
 
-  ArgsCommandGeneral readCommand(string yytext)
+  /**
+   * @brief Parsea un comando en texto plano y retorna el argumento estructurado.
+   *
+   * @param yytext Cadena del comando (ej: "GET users 2").
+   * @return ArgsCommandGeneral Contenedor con el comando detectado.
+   * @throws PatternException si el formato no es reconocido.
+   */
+  ArgsCommandGeneral readCommand(string yytext, SOCKET client)
   {
     smatch match;
     ArgsCommandGeneral general;
@@ -58,6 +83,12 @@ namespace parser_engine
       auto command = _read_delete(match);
       general.remove = std::make_optional(command);
     }
+    else if (regex_match(yytext, match, SUB_PATTERN))
+    {
+      auto command = _read_sub(match);
+      command.client = client;
+      general.sub = std::make_optional(command);
+    }
     else
     {
       throw PatternException("Comando no reconocido o mal formado.");
@@ -66,6 +97,9 @@ namespace parser_engine
     return general;
   }
 
+  /**
+   * @brief Parsea un comando CREATE y genera ArgsCommandCreate.
+   */
   ArgsCommandCreate _read_create(const smatch &match)
   {
     string tableName = match[1];
@@ -93,6 +127,9 @@ namespace parser_engine
     return ArgsCommandCreate{Operation::CREATE_TABLE, tableName, t};
   }
 
+  /**
+   * @brief Parsea un comando GET y genera ArgsCommandGet.
+   */
   ArgsCommandGet _read_get(const smatch &match)
   {
     string tableName = match[1];
@@ -101,6 +138,9 @@ namespace parser_engine
     return ArgsCommandGet{Operation::GET, tableName, id};
   }
 
+  /**
+   * @brief Parsea un comando INSERT y genera ArgsCommandInsert.
+   */
   ArgsCommandInsert _read_insert(const smatch &match)
   {
     string tableName = match[1];
@@ -148,6 +188,9 @@ namespace parser_engine
     return ArgsCommandInsert{Operation::INSERT, tableName, r};
   }
 
+  /**
+   * @brief Parsea un comando UPDATE y genera ArgsCommandUpdate.
+   */
   ArgsCommandUpdate _read_update(const smatch &match)
   {
     string tableName = match[1];
@@ -196,11 +239,24 @@ namespace parser_engine
     return ArgsCommandUpdate{Operation::UPDATE, tableName, id, r};
   }
 
+  /**
+   * @brief Parsea un comando DELETE y genera ArgsCommandDelete.
+   */
   ArgsCommandDelete _read_delete(const smatch &match)
   {
     string tableName = match[1];
     int64_t id = stoi(match[2]);
 
     return ArgsCommandDelete{Operation::REMOVE, tableName, id};
+  }
+
+  /**
+   * @brief Parsea un comando SUB y genera ArgsCommandSub.
+   */
+  ArgsCommandSub _read_sub(const smatch &match)
+  {
+    string tableName = match[1];
+
+    return ArgsCommandSub{Operation::SUB, tableName};
   }
 }

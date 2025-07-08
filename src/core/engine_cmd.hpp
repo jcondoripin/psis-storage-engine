@@ -109,7 +109,7 @@ public:
    * @brief Ejecuta la lógica del comando sobre la base de datos.
    * @return CommandResult con estado, detalle y datos (si aplica).
    */
-  virtual CommandResult execute(DatabaseNode &db) const = 0;
+  virtual CommandResult execute(DatabaseNode &db, std::shared_ptr<EventKeyHandler<std::string, CommandResult>> events_subs_) const = 0;
 
   /**
    * @brief Serializa información de auditoría o log en el stream.
