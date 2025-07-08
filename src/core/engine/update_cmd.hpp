@@ -15,7 +15,7 @@ public:
     if (db.update(args_.tableName, args_.key, args_.record))
     {
       std::cout << "Actualizado: " << args_.key << "\n";
-      return CommandResult::Ok("Actualizado: " + std::to_string(args_.key));
+      return CommandResult::WithData({args_.record}, "Actualizado: " + std::to_string(args_.key));
     }
     std::cerr << "No se encontro la clave\n";
     return CommandResult::Fail("No se encontro la clave");

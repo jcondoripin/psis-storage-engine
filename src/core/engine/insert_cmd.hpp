@@ -15,7 +15,7 @@ public:
     if (db.insert(args_.tableName, args_.record))
     {
       std::cout << "Insertado en " << args_.tableName << "\n";
-      return CommandResult::Ok("Insertado en " + args_.tableName);
+      return CommandResult::WithData({args_.record}, "Insertado en " + args_.tableName);
     }
     std::cerr << "Clave duplicada al insertar\n";
     return CommandResult::Fail("Clave duplicada al insertar");

@@ -23,7 +23,7 @@ int main()
   std::cout << "🔁 Base de datos restaurada desde archivos:\n";
 
   // Verifica que los datos están en memoria (árbol)
-  auto res = db.search(table, 1);
+  auto res = db.get(table, 1);
   if (res)
   {
     std::cout << "✅ Registro encontrado (ID 1): ";
@@ -40,7 +40,7 @@ int main()
   Record r2;
   r2.values =  {{"id", "1", "INT"}, {"name", "ALICE UPDATEING", "TEXT"}};
   db.update(table, 1, r2);
-  auto updated = db.search(table, 1);
+  auto updated = db.get(table, 1);
   if (updated)
   {
     std::cout << "✅ Registro actualizado (ID 1): ";
