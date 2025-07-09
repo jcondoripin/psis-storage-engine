@@ -106,6 +106,40 @@ public:
   };
 
   /**
+   * Busca valores asociados al value en el árbol B+
+   * @param value El valor a buscar
+   * @return Un std::vector<value> que contiene los valores similares al buscado
+   * se encuentra
+   */
+  std::vector<Value> filter(const Value &value) const
+  {
+    emitEvent(BPlusTreeEventType::SEARCH_STARTED, std::nullopt, std::nullopt, "Inicio de search");
+
+    std::vector<Value> result;
+
+    auto node = rootLinked;
+
+    while (node)
+    {
+      for (const auto v : node->values)
+      {
+        if (v == value)
+        {
+          emitEvent(BPlusTreeEventType::SEARCH_HIT, std::nullopt, value, "Search hit");
+
+          result.push_back(v);
+        }
+      }
+      node = node->next;
+    }
+    if (result.size() == 0)
+    {
+      emitEvent(BPlusTreeEventType::SEARCH_MISS, std::nullopt, std::nullopt, "Search miss");
+    }
+    return result;
+  };
+
+  /**
    * Elimina una clave y su valor asociado del árbol B+
    * @param key La clave a eliminar
    * @return true si la clave fue eliminada, false si no se encontró
@@ -181,6 +215,8 @@ public:
    */
   std::vector<Value> traverse() const
   {
+    emitEvent(BPlusTreeEventType::SEARCH_TRAVERSE, std::nullopt, std::nullopt, "Busqueda en paginas");
+
     std::vector<Value> result;
     auto node = rootLinked;
     while (node)

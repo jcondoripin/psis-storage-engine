@@ -20,7 +20,6 @@
 #include "./engine/delete_cmd.hpp"
 #include "./engine/sub_cmd.hpp"
 #include "./engine/get_cmd.hpp"
-#include "./engine/select_cmd.hpp"
 #include "./engine/query_cmd.hpp"
 
 /**
@@ -37,15 +36,15 @@ inline std::unique_ptr<EngineCommand> makeCommand(const ArgsCommandGeneral &args
     return std::make_unique<CreateTableCmd>(
         static_cast<const ArgsCommandCreate &>(args.create.value()));
   }
-  else if (args.select.has_value())
-  {
-    return std::make_unique<SelectCmd>(
-        static_cast<const ArgsCommandSelect &>(args.select.value()));
-  }
   else if (args.get.has_value())
   {
     return std::make_unique<GetCmd>(
         static_cast<const ArgsCommandGet &>(args.get.value()));
+  }
+  else if (args.query.has_value())
+  {
+    return std::make_unique<QueryCmd>(
+        static_cast<const ArgsCommandQuery &>(args.query.value()));
   }
   else if (args.insert.has_value())
   {
@@ -67,11 +66,6 @@ inline std::unique_ptr<EngineCommand> makeCommand(const ArgsCommandGeneral &args
     return std::make_unique<SubCmd>(
         static_cast<const ArgsCommandSub &>(args.sub.value()), listenner);
   }
-  else if (args.query.has_value())
-  {
-  return std::make_unique<QueryCommand>(static_cast<const ArgsQuery &>(args.query.value()));
-  }
-
   else
   {
     return nullptr;

@@ -25,13 +25,12 @@ enum class Operation
   UPDATE,
   REMOVE,
   GET,
-  SEARCH,
   BACKUP,
+  QUERY,
 
   /// @brief  Operaciones para eventos en tiempo real
   PUB,
   SUB,
-  QUERY,
 };
 
 inline std::string operationToString(Operation op)
@@ -48,8 +47,8 @@ inline std::string operationToString(Operation op)
     return "REMOVE";
   case Operation::GET:
     return "GET";
-  case Operation::SEARCH:
-    return "SEARCH";
+  case Operation::QUERY:
+    return "QUERY";
   case Operation::BACKUP:
     return "BACKUP";
   case Operation::PUB:
@@ -73,8 +72,8 @@ Operation stringToOperation(const std::string &str)
     return Operation::REMOVE;
   if (str == "GET")
     return Operation::GET;
-  if (str == "SEARCH")
-    return Operation::SEARCH;
+  if (str == "QUERY")
+    return Operation::QUERY;
   if (str == "BACKUP")
     return Operation::BACKUP;
   if (str == "PUB")

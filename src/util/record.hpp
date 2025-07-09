@@ -17,6 +17,23 @@ struct Record
   Record() : values({}) {}
   Record(std::vector<RecordValue> _v) : values(_v) {}
 
+  bool operator==(const Record &other) const
+  {
+    for (const auto &rv : other.values)
+    {
+      for (int i = 0; i < values.size(); i++)
+      {
+        if (values[i].column.compare(rv.column) == 0)
+        {
+          if (values[i].value != other.values[i].value) {
+            return false;
+          }
+        }
+      }
+    }
+    return true;
+  }
+
   Record &operator=(const Record &other)
   {
     for (const auto &rv : other.values)

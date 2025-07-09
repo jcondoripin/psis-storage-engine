@@ -31,7 +31,9 @@ enum class BPlusTreeEventType
 
   SEARCH_STARTED, // Inicio de búsqueda
   SEARCH_HIT,     // Clave encontrada
-  SEARCH_MISS     // Clave no encontrada
+  SEARCH_MISS,    // Clave no encontrada
+
+  SEARCH_TRAVERSE // Clave no encontrada
 };
 
 const char *to_string_bplustree_event(BPlusTreeEventType t)
@@ -78,6 +80,8 @@ const char *to_string_bplustree_event(BPlusTreeEventType t)
     return "SEARCH_HIT";
   case BPlusTreeEventType::SEARCH_MISS:
     return "SEARCH_MISS";
+  case BPlusTreeEventType::SEARCH_TRAVERSE:
+    return "SEARCH_TRAVERSE";
   default:
     return "UNKNOWN";
   }

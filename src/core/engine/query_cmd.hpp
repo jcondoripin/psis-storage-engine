@@ -3,26 +3,30 @@
 #include "../engine_cmd.hpp"
 #include "../../storage/database_node.hpp"
 #include "../../util/event.hpp"
-#include <memory>
 
-class QueryCommand : public EngineCommand {
+class QueryCmd : public EngineCommand
+{
 public:
-  ArgsQuery args;
+  explicit QueryCmd(const ArgsCommandQuery &args)
+      : args_(args) {}
 
-  QueryCommand(ArgsQuery q) : args(std::move(q)) {} 
-
-  CommandResult execute(DatabaseNode &db, std::shared_ptr<EventKeyHandler<std::string, CommandResult>> events_subs_) const override {
-    try {
-      auto result = db.searchFilter(args.tableName, args.filter);
-      return CommandResult::WithData(result, "Consulta WHERE ejecutada.");
-    } catch (const std::exception &e) {
-      return CommandResult::Fail(e.what());
+  CommandResult execute(DatabaseNode &db, std::shared_ptr<EventKeyHandler<std::string, CommandResult>> events_subs_) const override
+  {
+    auto records = db.searchFilter(args_.tableName, args_.filter);
+    for (auto &record : records)
+    {
+      for (const auto &v : record.values)
+        std::cout << v.column << "=" << v.value << " ";
+      std::cout << "\n";
     }
+    return CommandResult::WithData(records, "Registros obtenidos");
   }
 
-  void log(std::ostream &os) const override {
-    os << "SELECT FROM " << args.tableName << " WHERE ";
-    for (const auto &v : args.filter.values)
-      os << v.column << "='" << v.value << "' ";
+  void log(std::ostream & /*os*/) const override
+  {
+    // no log on GET
   }
+
+private:
+  ArgsCommandQuery args_;
 };

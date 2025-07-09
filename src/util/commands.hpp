@@ -2,8 +2,6 @@
 
 #include "operation.hpp"
 #include "record.hpp"
-#include "query_args.hpp"
-
 
 struct ArgsCommand
 {
@@ -47,6 +45,10 @@ struct ArgsCommandSub : ArgsCommand
   SOCKET client = 0;
 };
 
+struct ArgsCommandQuery: ArgsCommand {
+  Record filter;
+};
+
 struct ArgsCommandGeneral
 {
   std::optional<ArgsCommandCreate> create = std::nullopt;
@@ -56,6 +58,6 @@ struct ArgsCommandGeneral
   std::optional<ArgsCommandUpdate> update = std::nullopt;
   std::optional<ArgsCommandDelete> remove = std::nullopt;
   std::optional<ArgsCommandSub> sub = std::nullopt;
-  std::optional<ArgsQuery> query;
+  std::optional<ArgsCommandQuery> query = std::nullopt;
 
 };

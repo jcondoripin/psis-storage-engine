@@ -1,5 +1,0 @@
-CREATE_TABLE users, score:DOUBLE, name:TEXT, id:INT
-INSERT users, id:1:INT, name:Alice:TEXT, score:98.5:DOUBLE
-UPDATE users, name:Alicia:TEXT
-INSERT users, id:2:INT, name:Bob:TEXT, score:77.5:DOUBLE
-SELECT FROM users WHERE name='"Alicia"' SELECT FROM users WHERE name='"Alice"' SELECT FROM users WHERE ='"98.5"' 
