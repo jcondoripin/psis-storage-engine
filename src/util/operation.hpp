@@ -31,6 +31,7 @@ enum class Operation
   /// @brief  Operaciones para eventos en tiempo real
   PUB,
   SUB,
+  QUERY,
 };
 
 inline std::string operationToString(Operation op)

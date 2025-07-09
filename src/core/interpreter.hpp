@@ -11,6 +11,8 @@
 #include "../util/record.hpp"
 #include "../storage/database_node.hpp"
 #include "../storage/database_node_flb.hpp"
+#include "../util/query_args.hpp"
+
 
 /**
  * @brief Espacio de nombres encargado de interpretar y parsear los comandos tipo texto.
@@ -39,12 +41,25 @@ namespace parser_engine
   /// Expresión regular para comando SUB <tabla>
   const regex SUB_PATTERN(R"(SUB\s+(\w+))");
 
+  /// Expresión regular para comando SELECT <tabla> WHERE <filtros>
+  const regex QUERY_PATTERN(
+  R"(SELECT\s+(\w+)\s+WHERE\s+((?:(?:\w*):(?:"[^"]*"|[^:\s]+):\w+)(?:\s+(?:\w*):(?:"[^"]*"|[^:\s]+):\w+)*))"
+);
+
+
+
+
+
   ArgsCommandCreate _read_create(const smatch &match);
   ArgsCommandGet _read_get(const smatch &match);
   ArgsCommandInsert _read_insert(const smatch &match);
   ArgsCommandUpdate _read_update(const smatch &match);
   ArgsCommandDelete _read_delete(const smatch &match);
   ArgsCommandSub _read_sub(const smatch &match);
+
+  
+
+
 
   /**
    * @brief Parsea un comando en texto plano y retorna el argumento estructurado.
@@ -53,49 +68,114 @@ namespace parser_engine
    * @return ArgsCommandGeneral Contenedor con el comando detectado.
    * @throws PatternException si el formato no es reconocido.
    */
-  ArgsCommandGeneral readCommand(string yytext, SOCKET client)
-  {
-    smatch match;
-    ArgsCommandGeneral general;
 
-    if (regex_match(yytext, match, CREATE_PATTERN))
-    {
-      auto command = _read_create(match);
-      general.create = std::make_optional(command);
+  // Las funciones _read_create, _read_get, _read_insert, _read_update, _read_delete, _read_sub se mantienen igual
+  std::string trimAll(const std::string &input) {
+  std::string output;
+  bool first = true;
+  for (char c : input) {
+    if (first && c == '>') {
+      first = false;
+      continue; // saltar '>'
     }
-    else if (regex_match(yytext, match, INSERT_PATTERN))
-    {
-      auto command = _read_insert(match);
-      general.insert = std::make_optional(command);
+    if (c != '\n' && c != '\r') {
+      output += c;
     }
-    else if (regex_match(yytext, match, GET_PATTERN))
-    {
-      auto command = _read_get(match);
-      general.get = std::make_optional(command);
-    }
-    else if (regex_match(yytext, match, UPDATE_PATTERN))
-    {
-      auto command = _read_update(match);
-      general.update = std::make_optional(command);
-    }
-    else if (regex_match(yytext, match, DELETE_PATTERN))
-    {
-      auto command = _read_delete(match);
-      general.remove = std::make_optional(command);
-    }
-    else if (regex_match(yytext, match, SUB_PATTERN))
-    {
-      auto command = _read_sub(match);
-      command.client = client;
-      general.sub = std::make_optional(command);
-    }
-    else
-    {
-      throw PatternException("Comando no reconocido o mal formado.");
-    }
-
-    return general;
+    first = false;
   }
+  return output;
+}
+
+
+ArgsQuery _read_query(const smatch &match)
+{
+  string tableName = match[1];
+  string filters = match[2];
+
+  std::cout << "🧪 _read_query: tabla=" << tableName << " | filtros='" << filters << "'\n";
+
+  Record r;
+  stringstream ss(filters);
+  string token;
+
+  while (ss >> token)
+  {
+    auto parts = std::count(token.begin(), token.end(), ':');
+    if (parts == 2) {
+      // columna:valor:tipo
+      auto pos1 = token.find(':');
+      auto pos2 = token.rfind(':');
+      string column = token.substr(0, pos1);
+      string value = token.substr(pos1 + 1, pos2 - pos1 - 1);
+      string kind = token.substr(pos2 + 1);
+      r.values.push_back({column, value, kind});
+    }
+    else if (parts == 1) {
+      // valor:tipo → usar columna vacía como comodín
+      auto pos = token.find(':');
+      string value = token.substr(0, pos);
+      string kind = token.substr(pos + 1);
+      r.values.push_back({"", value, kind});
+    }
+    else {
+      throw runtime_error("❌ Filtro mal formado: " + token);
+    }
+  }
+
+  return ArgsQuery{Operation::QUERY, tableName, r};
+}
+
+
+  
+  
+  
+  ArgsCommandGeneral readCommand(string yytext, SOCKET client)
+ {
+  std::cout << "⏩ Recibido crudo: ";
+  for (char c : yytext)
+    std::cout << "[" << (int)c << "]";  // Imprime el valor ASCII de cada carácter
+  std::cout << std::endl;
+
+  yytext = trimAll(yytext);
+ std::cout << "⏩ Luego de trim: ";
+for (char c : yytext)
+  std::cout << "[" << (int)c << "]";
+std::cout << std::endl;
+
+
+  smatch match;
+  ArgsCommandGeneral general;
+
+  if (regex_match(yytext, match, CREATE_PATTERN))
+    general.create = _read_create(match);
+  else if (regex_match(yytext, match, INSERT_PATTERN))
+    general.insert = _read_insert(match);
+  else if (regex_match(yytext, match, GET_PATTERN))
+    general.get = _read_get(match);
+  else if (regex_match(yytext, match, UPDATE_PATTERN))
+    general.update = _read_update(match);
+  else if (regex_match(yytext, match, DELETE_PATTERN))
+    general.remove = _read_delete(match);
+  else if (regex_match(yytext, match, SUB_PATTERN))
+  {
+    auto command = _read_sub(match);
+    command.client = client;
+    general.sub = command;
+  }
+  else if (regex_match(yytext, match, QUERY_PATTERN))
+  {
+    std::cout << "✅ MATCH SELECT/WHERE" << std::endl;
+    auto command = _read_query(match);
+    general.query = std::make_optional(command);
+  }
+  else
+    throw PatternException("Comando no reconocido o mal formado.");
+
+  return general;
+}
+
+ 
+  
 
   /**
    * @brief Parsea un comando CREATE y genera ArgsCommandCreate.
@@ -126,6 +206,14 @@ namespace parser_engine
 
     return ArgsCommandCreate{Operation::CREATE_TABLE, tableName, t};
   }
+
+  
+
+
+
+
+
+  
 
   /**
    * @brief Parsea un comando GET y genera ArgsCommandGet.
@@ -258,5 +346,6 @@ namespace parser_engine
     string tableName = match[1];
 
     return ArgsCommandSub{Operation::SUB, tableName};
-  }
+  } 
+
 }

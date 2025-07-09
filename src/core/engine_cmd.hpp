@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 #include <ostream>
+#include <optional> 
 
 /**
  * @brief Resultado de la ejecución de un comando.
@@ -117,3 +118,6 @@ public:
    */
   virtual void log(std::ostream &os) const = 0;
 };
+
+
+
