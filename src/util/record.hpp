@@ -21,11 +21,11 @@ struct Record
   {
     for (const auto &rv : other.values)
     {
-      for (int i = 0; i < values.size(); i++)
+      for (const auto &rv1 : values)
       {
-        if (values[i].column.compare(rv.column) == 0)
+        if (rv1.column.compare(rv.column) == 0)
         {
-          if (values[i].value != other.values[i].value) {
+          if (rv1.value != rv.value) {
             return false;
           }
         }
